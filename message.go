@@ -1,9 +1,8 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 
@@ -42,11 +41,23 @@ func (MessageHandler) Open(ws *websocket.Conn, json *simplejson.Json) {
 }
 
 func handleMessage(ws *websocket.Conn) {
-	scanner := bufio.NewScanner(ws)
-	for scanner.Scan() {
-		buf := scanner.Bytes()
-		fmt.Println(string(buf))
+	char := make([]byte, 1)
+	buffer := new(bytes.Buffer)
 
+LOOP:
+	for {
+		buffer.Reset()
+		for {
+			ws.Read(char)
+			if bytes.Equal(char, []byte("\n")) {
+				break
+			}
+			if _, err := buffer.Write(char); err != nil {
+				continue LOOP
+			}
+		}
+
+		buf := buffer.Bytes()
 		json, err := simplejson.NewJson(buf)
 		if err != nil {
 			log.Println(err)
@@ -58,8 +69,6 @@ func handleMessage(ws *websocket.Conn) {
 			continue
 		}
 
-		io.Copy(ws, ws)
-
 		switch t {
 		case "open":
 			messageHandler.Open(ws, json)
@@ -70,6 +79,7 @@ func handleMessage(ws *websocket.Conn) {
 			})
 		}
 	}
+
 }
 
 func renderJson(w io.Writer, data interface{}) {
