@@ -1,0 +1,9 @@
+#msgInput {
+    width: 100%;
+}
+
+#msgPanel, #userPanel {
+    height: 100px;
+    overflow-y: scroll;
+    word-break: break-all;
+}
