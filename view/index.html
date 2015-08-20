@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>聊天室</title>
+    <link rel="stylesheet" href="http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.min.css" type="text/css" media="screen" charset="utf-8">
+    <link rel="stylesheet" href="/static/index.css" type="text/css" media="screen" charset="utf-8">
+    <script type="text/javascript" charset="utf-8" src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="http://apps.bdimg.com/libs/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="http://apps.bdimg.com/libs/handlebars.js/2.0.0-alpha.4/handlebars.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="/static/index.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <hr />
+        <div class="col-md-8">
+            <div class="panel panel-default">
+                <div id="msgPanel" class="panel-body"></div>
+            </div>
+
+            <form id="msgForm" class="form-inline">
+                <input type="text" id="msgInput" class="form-control" placeholder="按回车键发送" />
+            </form>
+        </div>
+
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">当前在线人数：<strong>100</strong> </div>
+                <div id="userPanel" class="panel-body"></div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script id="msgTpl" type="text/template" charset="utf-8">
+    <div>
+        <strong class="text-{{color}}">{{user_name}}</strong>
+        <p class="text-{{color}}">{{content}}</p>
+    </div>
+</script>
+
+<script id="userTpl" type="text/template" charset="utf-8">
+    {{#list users}}
+    <p>{{user_name}}</p>
+    {{/list}}
+</script>
+
+</html>
