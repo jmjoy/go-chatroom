@@ -7,86 +7,158 @@ import (
 	"log"
 
 	simplejson "github.com/bitly/go-simplejson"
-	"github.com/pborman/uuid"
 	"golang.org/x/net/websocket"
 )
 
-var users = make(map[string]*User)
+var gAllConns = make(ConnUserMap)
+
+type ConnUserMap map[*websocket.Conn]*User
+
+func (this ConnUserMap) GetAllUserNames() []string {
+	userNames := make([]string, 0, 4)
+	for _, user := range gAllConns {
+		userNames = append(userNames, user.UserName)
+	}
+	return userNames
+}
+
+func (this ConnUserMap) SendAll(data interface{}) {
+	for conn := range this {
+		renderJson(conn, data)
+	}
+}
 
 type User struct {
-	Conn     *websocket.Conn
 	UserName string
 }
 
-var messageHandler = MessageHandler{}
+type MessageHandler struct {
+	Conn *websocket.Conn
+	Json *simplejson.Json
+}
 
-type MessageHandler struct{}
+func (this *MessageHandler) Open() {
+	_, ok := gAllConns[this.Conn]
+	if ok {
+		return
+	}
 
-func (MessageHandler) Open(ws *websocket.Conn, json *simplejson.Json) {
-	userName, err := json.Get("user_name").String()
+	userName, err := this.Json.Get("data").Get("userName").String()
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	token := uuid.New()
-	users[token] = &User{
-		Conn:     ws,
+	gAllConns[this.Conn] = &User{
 		UserName: userName,
 	}
 
-	renderJson(ws, map[string]string{
-		"token": token,
+	userNames := gAllConns.GetAllUserNames()
+	gAllConns.SendAll(map[string]interface{}{
+		"message":   userName + "进入聊天室",
+		"userNames": userNames,
 	})
 }
 
-func handleMessage(ws *websocket.Conn) {
-	char := make([]byte, 1)
+func (this *MessageHandler) Close() {
+	userName := gAllConns[this.Conn].UserName
+	delete(gAllConns, this.Conn)
+	this.Conn.Close()
+
+	userNames := gAllConns.GetAllUserNames()
+	gAllConns.SendAll(map[string]interface{}{
+		"message":   userName + "离开聊天室",
+		"userNames": userNames,
+	})
+}
+
+func (this *MessageHandler) GetName() {
+	user, ok := gAllConns[this.Conn]
+	if !ok {
+		this.RenderJson(map[string]interface{}{
+			"userName": nil,
+		})
+		return
+	}
+
+	this.RenderJson(map[string]interface{}{
+		"userName": user.UserName,
+	})
+}
+
+func (this *MessageHandler) SendMsg() {
+	content, err := this.Json.Get("data").Get("content").String()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	gAllConns.SendAll(map[string]interface{}{
+		"userName": gAllConns[this.Conn].UserName,
+		"content":  content,
+	})
+}
+
+func (this *MessageHandler) RenderJson(data interface{}) {
+	renderJson(this.Conn, data)
+}
+
+func handleMessage(conn *websocket.Conn) {
+	msgHandler := &MessageHandler{Conn: conn}
 	buffer := new(bytes.Buffer)
+	char := make([]byte, 1)
 
 LOOP:
 	for {
-		buffer.Reset()
 		for {
-			ws.Read(char)
+			_, err := conn.Read(char)
+			if err != nil {
+				if err != io.EOF {
+					log.Println(err)
+				}
+				// client has close
+				msgHandler.Close()
+				break LOOP
+			}
 			if bytes.Equal(char, []byte("\n")) {
 				break
 			}
-			if _, err := buffer.Write(char); err != nil {
-				continue LOOP
-			}
+			buffer.Write(char)
 		}
-
 		buf := buffer.Bytes()
+
+		// parse body json
 		json, err := simplejson.NewJson(buf)
 		if err != nil {
 			log.Println(err)
 			continue
 		}
+		msgHandler.Json = json
+
+		// use type to forward handler
 		t, err := json.Get("type").String()
 		if err != nil {
 			log.Println(err)
 			continue
 		}
-
 		switch t {
 		case "open":
-			messageHandler.Open(ws, json)
+			msgHandler.Open()
 
-		default:
-			renderJson(ws, map[string]string{
-				"msg": "unknow action",
-			})
+		case "getName":
+			msgHandler.GetName()
+
+		case "sendMsg":
+			msgHandler.SendMsg()
 		}
 	}
-
 }
 
-func renderJson(w io.Writer, data interface{}) {
+func renderJson(conn *websocket.Conn, data interface{}) {
 	buf, err := json.Marshal(data)
 	if err != nil {
-		log.Println(err)
-		return
+		panic(err)
 	}
-	w.Write(buf)
+
+	conn.Write(buf)
 }

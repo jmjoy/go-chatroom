@@ -37,7 +37,6 @@ $(function() {
     ws.onclose = wsOnClose;
     ws.onmessage = wsOnMessage;
     ws.onerror = wsOnError;
-
 });
 
 function submitMessage() {
@@ -50,12 +49,11 @@ function wsOnMessage(e) {
 
 function wsOnOpen(e) {
     wsSendMessage("open", {
-        "user_name": userName
+        "userName": userName
     });
 }
 
 function wsOnClose(e) {
-    wsSendMessage("close", null);
 }
 
 function wsOnError(e) {
