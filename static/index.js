@@ -31,6 +31,9 @@ $(function() {
     msgTpl = Handlebars.compile($("#msgTpl").html());
     userTpl = Handlebars.compile($("#userTpl").html());
 
+    // event
+    $("#msgForm").submit(submitMessage);
+
     // websocket
     ws = new WebSocket(wsUrl);
     ws.onopen = wsOnOpen;
@@ -40,11 +43,23 @@ $(function() {
 });
 
 function submitMessage() {
-
+    var content = $("#msgInput").val();
+    $("#msgInput").val("");
+    wsSendMessage("sendMsg", {"content": content});
+    return false;
 }
 
 function wsOnMessage(e) {
-    console.log(e);
+    var data = $.parseJSON(e.data);
+    switch (data.type) {
+    case "open":
+    case "close":
+        displayMessage("系统消息", data.message, "danger");
+        displayUsers(data.userNames);
+        break;
+    case "sendMsg":
+        displayMessage(data.userName, data.content, "default");
+    }
 }
 
 function wsOnOpen(e) {
@@ -54,16 +69,32 @@ function wsOnOpen(e) {
 }
 
 function wsOnClose(e) {
+    if (!confirm("聊天室连接已中断，是否重新加载页面？")) {
+        return false;
+    }
+    location.reload();
 }
 
 function wsOnError(e) {
+    alert("出现异常：", e);
 }
 
-function displayMessage(user, content, color) {
+function displayMessage(userName, content, color) {
+    var data = {
+        "user_name": userName,
+        "content": content,
+        "color": color,
+    };
+    var html = msgTpl(data);
+    $("#msgPanel").append(html);
+    scrollToButtom($("#msgPanel"));
 }
 
 function displayUsers(users) {
-    
+    var data = {"users": users};
+    var html = userTpl(data);
+    $("#userPanel").html(html);
+    $("#numUser").html(users.length);
 }
 
 function wsSendMessage(type, data) {
@@ -74,6 +105,10 @@ function wsSendMessage(type, data) {
     ws.send(JSON.stringify(json) + "\n");
 }
 
+function scrollToButtom(dom) {
+    dom.animate({scrollTop: dom.height()});
+}
+
 function checkSupportHtml5() {
   return !!document.createElement('canvas').getContext;
 }
@@ -81,7 +116,7 @@ function checkSupportHtml5() {
 function resetPanelHeight() {
     var winHeight = $(document).height();
     var userPanelHeight = winHeight - 110;
-    var msgPanelHeight = winHeight - 120;
+    var msgPanelHeight = winHeight - 123;
 
     if (userPanelHeight > 10) {
         $("#userPanel").css("height", userPanelHeight);

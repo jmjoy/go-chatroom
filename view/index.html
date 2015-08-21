@@ -26,7 +26,7 @@
 
         <div class="col-md-4">
             <div class="panel panel-default">
-                <div class="panel-heading">当前在线人数：<strong>100</strong> </div>
+                <div class="panel-heading">当前在线人数：<strong id="numUser"></strong> </div>
                 <div id="userPanel" class="panel-body"></div>
             </div>
         </div>
@@ -41,9 +41,9 @@
 </script>
 
 <script id="userTpl" type="text/template" charset="utf-8">
-    {{#list users}}
-    <p>{{user_name}}</p>
-    {{/list}}
+    {{#each users}}
+    <p> {{this}}</p>
+    {{/each}}
 </script>
 
 </html>

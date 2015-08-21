@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 
@@ -55,6 +56,7 @@ func (this *MessageHandler) Open() {
 
 	userNames := gAllConns.GetAllUserNames()
 	gAllConns.SendAll(map[string]interface{}{
+		"type":      "open",
 		"message":   userName + "进入聊天室",
 		"userNames": userNames,
 	})
@@ -67,6 +69,7 @@ func (this *MessageHandler) Close() {
 
 	userNames := gAllConns.GetAllUserNames()
 	gAllConns.SendAll(map[string]interface{}{
+		"type":      "close",
 		"message":   userName + "离开聊天室",
 		"userNames": userNames,
 	})
@@ -82,6 +85,7 @@ func (this *MessageHandler) GetName() {
 	}
 
 	this.RenderJson(map[string]interface{}{
+		"type":     "getName",
 		"userName": user.UserName,
 	})
 }
@@ -94,6 +98,7 @@ func (this *MessageHandler) SendMsg() {
 	}
 
 	gAllConns.SendAll(map[string]interface{}{
+		"type":     "sendMsg",
 		"userName": gAllConns[this.Conn].UserName,
 		"content":  content,
 	})
@@ -110,6 +115,7 @@ func handleMessage(conn *websocket.Conn) {
 
 LOOP:
 	for {
+		buffer.Reset()
 		for {
 			_, err := conn.Read(char)
 			if err != nil {
@@ -125,6 +131,10 @@ LOOP:
 			}
 			buffer.Write(char)
 		}
+
+		// TEST
+		fmt.Println("----" + buffer.String() + "----")
+
 		buf := buffer.Bytes()
 
 		// parse body json
@@ -146,10 +156,10 @@ LOOP:
 			msgHandler.Open()
 
 		case "getName":
-			msgHandler.GetName()
+			go msgHandler.GetName()
 
 		case "sendMsg":
-			msgHandler.SendMsg()
+			go msgHandler.SendMsg()
 		}
 	}
 }
