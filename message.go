@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 
@@ -131,9 +130,6 @@ LOOP:
 			}
 			buffer.Write(char)
 		}
-
-		// TEST
-		fmt.Println("----" + buffer.String() + "----")
 
 		buf := buffer.Bytes()
 

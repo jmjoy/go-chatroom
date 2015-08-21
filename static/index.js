@@ -106,7 +106,9 @@ function wsSendMessage(type, data) {
 }
 
 function scrollToButtom(dom) {
-    dom.animate({scrollTop: dom.height()});
+    if(dom[0].scrollHeight - dom.scrollTop() <= dom.outerHeight() * 3) {
+        dom.scrollTop(dom[0].scrollHeight);
+    }
 }
 
 function checkSupportHtml5() {
