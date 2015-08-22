@@ -1,8 +1,7 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
+	"container/list"
 	"io"
 	"log"
 
@@ -10,21 +9,29 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-var gAllConns = make(ConnUserMap)
+var (
+	gAllConns = make(ConnUserMap)
+	gMsgPool  = list.New()
+)
 
 type ConnUserMap map[*websocket.Conn]*User
 
 func (this ConnUserMap) GetAllUserNames() []string {
-	userNames := make([]string, 0, 4)
-	for _, user := range gAllConns {
+	userNames := make([]string, 0, len(this))
+	for _, user := range this {
 		userNames = append(userNames, user.UserName)
 	}
 	return userNames
 }
 
 func (this ConnUserMap) SendAll(data interface{}) {
+	gMsgPool.PushBack(data)
+	if gMsgPool.Len() > 10 {
+		gMsgPool.Remove(gMsgPool.Front())
+	}
+
 	for conn := range this {
-		renderJson(conn, data)
+		websocket.JSON.Send(conn, data)
 	}
 }
 
@@ -53,6 +60,12 @@ func (this *MessageHandler) Open() {
 		UserName: userName,
 	}
 
+	// send old message
+	for e := gMsgPool.Front(); e != nil; e = e.Next() {
+		websocket.JSON.Send(this.Conn, e.Value)
+	}
+
+	// send message
 	userNames := gAllConns.GetAllUserNames()
 	gAllConns.SendAll(map[string]interface{}{
 		"type":      "open",
@@ -74,21 +87,6 @@ func (this *MessageHandler) Close() {
 	})
 }
 
-func (this *MessageHandler) GetName() {
-	user, ok := gAllConns[this.Conn]
-	if !ok {
-		this.RenderJson(map[string]interface{}{
-			"userName": nil,
-		})
-		return
-	}
-
-	this.RenderJson(map[string]interface{}{
-		"type":     "getName",
-		"userName": user.UserName,
-	})
-}
-
 func (this *MessageHandler) SendMsg() {
 	content, err := this.Json.Get("data").Get("content").String()
 	if err != nil {
@@ -103,41 +101,27 @@ func (this *MessageHandler) SendMsg() {
 	})
 }
 
-func (this *MessageHandler) RenderJson(data interface{}) {
-	renderJson(this.Conn, data)
-}
-
 func handleMessage(conn *websocket.Conn) {
 	msgHandler := &MessageHandler{Conn: conn}
-	buffer := new(bytes.Buffer)
-	char := make([]byte, 1)
+	buf := make([]byte, 4096)
 
-LOOP:
 	for {
-		buffer.Reset()
-		for {
-			_, err := conn.Read(char)
-			if err != nil {
-				if err != io.EOF {
-					log.Println(err)
-				}
-				// client has close
+		n, err := conn.Read(buf)
+		if err != nil {
+			if err == io.EOF {
 				msgHandler.Close()
-				break LOOP
+			} else {
+				log.Println(err)
 			}
-			if bytes.Equal(char, []byte("\n")) {
-				break
-			}
-			buffer.Write(char)
+			return
 		}
-
-		buf := buffer.Bytes()
+		msg := buf[:n]
 
 		// parse body json
-		json, err := simplejson.NewJson(buf)
+		json, err := simplejson.NewJson(msg)
 		if err != nil {
 			log.Println(err)
-			continue
+			return
 		}
 		msgHandler.Json = json
 
@@ -145,26 +129,17 @@ LOOP:
 		t, err := json.Get("type").String()
 		if err != nil {
 			log.Println(err)
-			continue
+			return
 		}
 		switch t {
 		case "open":
 			msgHandler.Open()
 
-		case "getName":
-			go msgHandler.GetName()
-
 		case "sendMsg":
 			go msgHandler.SendMsg()
+
+		default:
+			go conn.Write(msg)
 		}
 	}
-}
-
-func renderJson(conn *websocket.Conn, data interface{}) {
-	buf, err := json.Marshal(data)
-	if err != nil {
-		panic(err)
-	}
-
-	conn.Write(buf)
 }

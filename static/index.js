@@ -102,7 +102,7 @@ function wsSendMessage(type, data) {
         "type": type,
         "data": data
     };
-    ws.send(JSON.stringify(json) + "\n");
+    ws.send(JSON.stringify(json));
 }
 
 function scrollToButtom(dom) {
