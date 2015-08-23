@@ -45,25 +45,25 @@ $(function() {
 function submitMessage() {
     var content = $("#msgInput").val();
     $("#msgInput").val("");
-    wsSendMessage("sendMsg", {"content": content});
+    wsSendMessage("message", {"content": content});
     return false;
 }
 
 function wsOnMessage(e) {
     var data = $.parseJSON(e.data);
     switch (data.type) {
-    case "open":
+    case "auth":
     case "close":
         displayMessage("系统消息", data.message, "danger");
         displayUsers(data.userNames);
         break;
-    case "sendMsg":
+    case "message":
         displayMessage(data.userName, data.content, "default");
     }
 }
 
 function wsOnOpen(e) {
-    wsSendMessage("open", {
+    wsSendMessage("auth", {
         "userName": userName
     });
 }

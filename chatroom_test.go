@@ -6,6 +6,8 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+var chReceiveExit = make(chan struct{})
+
 func TestHandleMessage(t *testing.T) {
 	origin := "http://localhost/"
 	url := "ws://localhost:9000/message"
@@ -14,27 +16,32 @@ func TestHandleMessage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer ws.Close()
 
 	go func() {
-		for {
-			var v interface{}
-			websocket.JSON.Receive(ws, &v)
-			t.Log(v)
-		}
+		websocket.JSON.Send(ws, map[string]interface{}{
+			"type": "auth",
+			"data": map[string]interface{}{
+				"userName": "Tester",
+			},
+		})
+
+		websocket.JSON.Send(ws, map[string]interface{}{
+			"type": "message",
+			"data": map[string]interface{}{
+				"content": "fuck you",
+			},
+		})
+
+		ws.Close()
 	}()
 
-	websocket.JSON.Send(ws, map[string]interface{}{
-		"type": "open",
-		"data": map[string]interface{}{
-			"userName": "Tester",
-		},
-	})
+	for {
+		var v interface{}
+		err := websocket.JSON.Receive(ws, &v)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(v)
+	}
 
-	websocket.JSON.Send(ws, map[string]interface{}{
-		"type": "sendMsg",
-		"data": map[string]interface{}{
-			"content": "fuck you",
-		},
-	})
 }

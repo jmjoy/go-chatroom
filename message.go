@@ -10,137 +10,185 @@ import (
 )
 
 var (
-	gAllConns = make(ConnUserMap)
+	gContexts = make(ContextPool)
 	gMsgPool  = list.New()
 )
 
-type ConnUserMap map[*websocket.Conn]*User
+type ContextPool map[*Context]struct{}
 
-func (this ConnUserMap) GetAllUserNames() []string {
-	userNames := make([]string, 0, len(this))
-	for _, user := range this {
-		userNames = append(userNames, user.UserName)
-	}
-	return userNames
-}
-
-func (this ConnUserMap) SendAll(data interface{}) {
-	gMsgPool.PushBack(data)
+func (this ContextPool) SendAll(msg interface{}) {
+	gMsgPool.PushBack(msg)
 	if gMsgPool.Len() > 10 {
 		gMsgPool.Remove(gMsgPool.Front())
 	}
 
-	for conn := range this {
-		websocket.JSON.Send(conn, data)
+	for c := range this {
+		c.ChanMsg <- msg
 	}
 }
 
-type User struct {
+func (this ContextPool) GetAllUserNames() []string {
+	userNames := make([]string, 0, len(this)/2)
+	for c := range this {
+		if c.UserName != "" {
+			userNames = append(userNames, c.UserName)
+		}
+	}
+	return userNames
+}
+
+func (this ContextPool) Add(c *Context) {
+	this[c] = struct{}{}
+}
+
+func (this ContextPool) Remove(c *Context) {
+	delete(this, c)
+}
+
+type Context struct {
+	*websocket.Conn
+	ChanMsg chan interface{}
+
 	UserName string
 }
 
-type MessageHandler struct {
-	Conn *websocket.Conn
-	Json *simplejson.Json
-}
-
-func (this *MessageHandler) Open() {
-	_, ok := gAllConns[this.Conn]
-	if ok {
-		return
+func NewContext(conn *websocket.Conn) *Context {
+	this := &Context{
+		Conn:    conn,
+		ChanMsg: make(chan interface{}),
 	}
 
-	userName, err := this.Json.Get("data").Get("userName").String()
+	go func() {
+		for {
+			msg := <-this.ChanMsg
+			// close this connect
+			if msg == nil {
+				close(this.ChanMsg)
+				this.Conn.Close()
+				this = nil
+				return
+			}
+			websocket.JSON.Send(this.Conn, msg)
+		}
+	}()
+
+	return this
+}
+
+func (this *Context) Send(msg interface{}) {
+	this.ChanMsg <- msg
+}
+
+func (this *Context) IsAuth() bool {
+	return this != nil && this.UserName != ""
+}
+
+func (this *Context) Auth(data *simplejson.Json) {
+	userName, err := data.Get("userName").String()
 	if err != nil {
 		log.Println(err)
 		return
 	}
-
-	gAllConns[this.Conn] = &User{
-		UserName: userName,
-	}
-
-	// send old message
-	for e := gMsgPool.Front(); e != nil; e = e.Next() {
-		websocket.JSON.Send(this.Conn, e.Value)
-	}
+	this.UserName = userName
 
 	// send message
-	userNames := gAllConns.GetAllUserNames()
-	gAllConns.SendAll(map[string]interface{}{
-		"type":      "open",
+	userNames := gContexts.GetAllUserNames()
+	gContexts.SendAll(map[string]interface{}{
+		"type":      "auth",
 		"message":   userName + "进入聊天室",
 		"userNames": userNames,
 	})
 }
 
-func (this *MessageHandler) Close() {
-	userName := gAllConns[this.Conn].UserName
-	delete(gAllConns, this.Conn)
-	this.Conn.Close()
-
-	userNames := gAllConns.GetAllUserNames()
-	gAllConns.SendAll(map[string]interface{}{
-		"type":      "close",
-		"message":   userName + "离开聊天室",
-		"userNames": userNames,
-	})
-}
-
-func (this *MessageHandler) SendMsg() {
-	content, err := this.Json.Get("data").Get("content").String()
+func (this *Context) Message(data *simplejson.Json) {
+	content, err := data.Get("content").String()
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	gAllConns.SendAll(map[string]interface{}{
-		"type":     "sendMsg",
-		"userName": gAllConns[this.Conn].UserName,
+	gContexts.SendAll(map[string]interface{}{
+		"type":     "message",
+		"userName": this.UserName,
 		"content":  content,
 	})
 }
 
 func handleMessage(conn *websocket.Conn) {
-	msgHandler := &MessageHandler{Conn: conn}
-	buf := make([]byte, 4096)
+	context := NewContext(conn)
+	gContexts.Add(context)
 
+	// handle panic and quit chatroom
+	defer func() {
+		context.Send(nil)
+		gContexts.Remove(context)
+		if context.IsAuth() {
+			gContexts.SendAll(map[string]interface{}{
+				"type":      "close",
+				"message":   context.UserName + "离开聊天室",
+				"userNames": gContexts.GetAllUserNames(),
+			})
+		}
+		context = nil
+
+		if err := recover(); err != nil {
+			// if err is io.EOF, maye be beacause of client closing
+			if err != io.EOF {
+				log.Println(err)
+			}
+		}
+	}()
+
+	// send old message
+	for e := gMsgPool.Front(); e != nil; e = e.Next() {
+		context.Send(e.Value)
+	}
+
+	buf := make([]byte, 4096)
 	for {
 		n, err := conn.Read(buf)
 		if err != nil {
-			if err == io.EOF {
-				msgHandler.Close()
-			} else {
-				log.Println(err)
-			}
-			return
+			panic(err)
 		}
 		msg := buf[:n]
 
 		// parse body json
 		json, err := simplejson.NewJson(msg)
 		if err != nil {
-			log.Println(err)
-			return
+			panic(err)
 		}
-		msgHandler.Json = json
 
 		// use type to forward handler
-		t, err := json.Get("type").String()
+		typ, err := json.Get("type").String()
 		if err != nil {
-			log.Println(err)
-			return
+			panic(err)
+		}
+		data := json.Get("data")
+
+		// auth operation
+		if typ == "auth" {
+			context.Auth(data)
+			continue
 		}
 
-		switch t {
-		case "open":
-			msgHandler.Open()
+		// below operation need check auth
+		if !context.IsAuth() {
+			context.Send(map[string]interface{}{
+				"type":    "error",
+				"message": "no ahth",
+			})
+			continue
+		}
 
-		case "sendMsg":
-			go msgHandler.SendMsg()
+		switch typ {
+		case "message":
+			context.Message(data)
 
 		default:
-			go conn.Write(msg)
+			context.Send(map[string]interface{}{
+				"type":    "error",
+				"message": "unknow type",
+			})
 		}
 	}
 }
