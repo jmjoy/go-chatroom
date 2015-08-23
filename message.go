@@ -23,14 +23,14 @@ func (this ContextPool) SendAll(msg interface{}) {
 	}
 
 	for c := range this {
-		c.ChanMsg <- msg
+		c.Send(msg)
 	}
 }
 
 func (this ContextPool) GetAllUserNames() []string {
 	userNames := make([]string, 0, len(this)/2)
 	for c := range this {
-		if c.UserName != "" {
+		if c.HasAuth() {
 			userNames = append(userNames, c.UserName)
 		}
 	}
@@ -79,7 +79,7 @@ func (this *Context) Send(msg interface{}) {
 	this.ChanMsg <- msg
 }
 
-func (this *Context) IsAuth() bool {
+func (this *Context) HasAuth() bool {
 	return this != nil && this.UserName != ""
 }
 
@@ -122,7 +122,7 @@ func handleMessage(conn *websocket.Conn) {
 	defer func() {
 		context.Send(nil)
 		gContexts.Remove(context)
-		if context.IsAuth() {
+		if context.HasAuth() {
 			gContexts.SendAll(map[string]interface{}{
 				"type":      "close",
 				"message":   context.UserName + "离开聊天室",
@@ -172,7 +172,7 @@ func handleMessage(conn *websocket.Conn) {
 		}
 
 		// below operation need check auth
-		if !context.IsAuth() {
+		if !context.HasAuth() {
 			context.Send(map[string]interface{}{
 				"type":    "error",
 				"message": "no ahth",

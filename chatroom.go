@@ -11,7 +11,7 @@ import (
 
 func main() {
 	router()
-	http.ListenAndServe(":9000", nil)
+	log.Fatal(http.ListenAndServe(":9000", nil))
 }
 
 func router() {
