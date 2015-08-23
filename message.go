@@ -131,6 +131,7 @@ func handleMessage(conn *websocket.Conn) {
 			log.Println(err)
 			return
 		}
+
 		switch t {
 		case "open":
 			msgHandler.Open()

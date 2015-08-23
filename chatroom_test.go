@@ -14,18 +14,27 @@ func TestHandleMessage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer ws.Close()
 
-	for i := 0; i < 10; i++ {
-		if _, err := ws.Write([]byte(`{"type":"null","name":"jmjoy"}`)); err != nil {
-			t.Fatal(err)
+	go func() {
+		for {
+			var v interface{}
+			websocket.JSON.Receive(ws, &v)
+			t.Log(v)
 		}
+	}()
 
-		var msg = make([]byte, 512)
-		var n int
-		if n, err = ws.Read(msg); err != nil {
-			t.Fatal(err)
-		}
+	websocket.JSON.Send(ws, map[string]interface{}{
+		"type": "open",
+		"data": map[string]interface{}{
+			"userName": "Tester",
+		},
+	})
 
-		t.Logf("Received: %s.\n", msg[:n])
-	}
+	websocket.JSON.Send(ws, map[string]interface{}{
+		"type": "sendMsg",
+		"data": map[string]interface{}{
+			"content": "fuck you",
+		},
+	})
 }
