@@ -14,7 +14,13 @@
 
 <body>
     <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="javascript:;">聊天室</a>
+            </div>
+        </div>
     </nav>
+
     <div id="container" class="container-fluid">
         <div id="msgContainer" class="col-xs-8">
             <div id="msgBasePanel" class="panel panel-default">
@@ -26,9 +32,13 @@
             </form>
         </div>
 
-        <div class="col-xs-4">
-            <div class="panel panel-default">
-                <div class="panel-heading">当前在线人数：<strong id="numUser"></strong> </div>
+        <div id="otherContainer" class="col-xs-4">
+            <div id="systemBasePanel" class="panel panel-default">
+                <div id="systemPanel" class="panel-body"></div>
+            </div>
+
+            <div id="userBasePanel" class="panel panel-default">
+                <div class="panel-heading">当前在线人数：<span id="numUser" class="badge"></span> </div>
                 <div id="userPanel" class="panel-body"></div>
             </div>
         </div>
