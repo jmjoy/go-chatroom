@@ -14,6 +14,8 @@ $(function() {
     //$(window).resize(resetPanelHeight);
     //resetPanelHeight();
 
+    $("#editor").wysiwyg();
+
     // get userName
     userName = localStorage.getItem("user.name");
     if (!userName) {

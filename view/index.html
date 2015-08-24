@@ -5,10 +5,16 @@
     <meta name="viewport" content="width=device-width,user-scalable=no,minimum-scale=1.0,maximum-scale=1.0"/>
     <title>聊天室</title>
     <link rel="stylesheet" href="http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.min.css" type="text/css" media="screen" charset="utf-8">
+    <link rel="stylesheet" href="http://apps.bdimg.com/libs/prettify/r298/prettify.min.css" type="text/css" media="screen" charset="utf-8">
+    <link rel="stylesheet" href="http://apps.bdimg.com/libs/fontawesome/4.2.0/css/font-awesome.min.css" type="text/css" media="screen" charset="utf-8">
     <link rel="stylesheet" href="/static/index.css" type="text/css" media="screen" charset="utf-8">
+
     <script type="text/javascript" charset="utf-8" src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="http://apps.bdimg.com/libs/bootstrap/3.3.4/js/bootstrap.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="http://apps.bdimg.com/libs/handlebars.js/2.0.0-alpha.4/handlebars.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="http://apps.bdimg.com/libs/prettify/r298/prettify.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="/static/jquery.hotkeys.js"></script>
+    <script type="text/javascript" charset="utf-8" src="/static/bootstrap-wysiwyg.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="/static/index.js"></script>
 </head>
 
@@ -28,7 +34,8 @@
             </div>
 
             <form id="msgForm" class="form-inline">
-                <input type="text" id="msgInput" class="form-control" placeholder="按回车键发送" />
+                <div id="editor"></div>
+                <!--<input type="text" id="msgInput" class="form-control" placeholder="按回车键发送" />-->
             </form>
         </div>
 
