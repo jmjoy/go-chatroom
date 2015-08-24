@@ -7,11 +7,12 @@ var userTpl = null;
 $(function() {
     if (!checkSupportHtml5()) {
         alert("您的浏览器不支持HTML5");
+        return;
     }
 
     // adjust ui height
-    $(window).resize(resetPanelHeight);
-    resetPanelHeight();
+    //$(window).resize(resetPanelHeight);
+    //resetPanelHeight();
 
     // get userName
     userName = localStorage.getItem("user.name");

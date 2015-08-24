@@ -1,17 +1,38 @@
 package main
 
 import (
+	"flag"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"golang.org/x/net/websocket"
 )
 
+var (
+	gPort   int
+	gIsHelp bool
+)
+
+func init() {
+	flag.IntVar(&gPort, "p", 10000, "web server port")
+	flag.IntVar(&gPort, "port", 10000, "web server port")
+	flag.BoolVar(&gIsHelp, "h", false, "show help")
+	flag.BoolVar(&gIsHelp, "help", false, "show help")
+}
+
 func main() {
+	flag.Parse()
+
+	if gIsHelp {
+		flag.Usage()
+		return
+	}
+
 	router()
-	log.Fatal(http.ListenAndServe(":9000", nil))
+	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(gPort), nil))
 }
 
 func router() {
