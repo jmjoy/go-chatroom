@@ -91,10 +91,24 @@ html, body {
     width: 40px;
 }
 
-#sendBtn {
+#submitBtn {
     position: absolute;
     top: -100px;
     right: 0;
     width: 60px;
     bottom: 0;
+}
+
+.msgShowPanel  {
+    padding: 10px;
+    margin: 5px 0 5px 0;
+}
+
+.userShowPanel {
+    margin: 5px 0 5px 0;
+}
+
+.systemShowPanel {
+    padding: 2px 0 2px 12px;
+    margin: 2px 0 2px 0;
 }

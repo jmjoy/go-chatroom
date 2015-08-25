@@ -46,17 +46,29 @@
                     <input type="file" data-role="magic-overlay" data-target="#pictureBtn" data-edit="insertImage" id="pictureFile" class="hidden" />
                 </div>
                 <div id="editor" class="form-control"></div>
-                <button id="sendBtn" class="btn btn-default">发送</button>
+                <button id="submitBtn" class="btn btn-default">发送</button>
             </form>
         </div>
 
         <div id="otherContainer" class="col-xs-4">
             <div id="systemBasePanel" class="panel panel-default">
-                <div id="systemPanel" class="panel-body"></div>
+                <div id="systemPanel" class="panel-body">
+
+
+                    <div class="alert alert-danger systemShowPanel" role="alert">hello world</div>
+                    <div class="alert alert-danger systemShowPanel" role="alert">hello world</div>
+                    <div class="alert alert-danger systemShowPanel" role="alert">hello world</div>
+                    <div class="alert alert-danger systemShowPanel" role="alert">hello world</div>
+                    <div class="alert alert-danger systemShowPanel" role="alert">hello world</div>
+                    <div class="alert alert-danger systemShowPanel" role="alert">hello world</div>
+
+
+
+                </div>
             </div>
 
             <div id="userBasePanel" class="panel panel-default">
-                <div class="panel-heading">当前在线人数：<span id="numUser" class="badge"></span> </div>
+                <div class="panel-heading"> <strong>当前在线人数：</strong> <span id="numUser" class="badge"></span> </div>
                 <div id="userPanel" class="panel-body"></div>
             </div>
         </div>
@@ -64,15 +76,20 @@
 </body>
 
 <script id="msgTpl" type="text/template" charset="utf-8">
-    <div>
-        <strong class="text-{{color}}">{{user_name}}</strong>
-        <p class="text-{{color}}">{{content}}</p>
+    <div class="alert alert-info msgShowPanel">
+        <div class="row">
+            <div class="col-xs-8 text-left">
+                <strong> <span class="glyphicon glyphicon-triangle-right" aria-hidden="true"></span> {{user_name}}</strong>
+            </div>
+            <div class="col-xs-4 text-right">18:00</div>
+        </div>
+        <p>{{content}}</p>
     </div>
 </script>
 
 <script id="userTpl" type="text/template" charset="utf-8">
     {{#each users}}
-    <p> {{this}}</p>
+    <div class="well well-sm userShowPanel"> <span class="glyphicon glyphicon glyphicon-user" aria-hidden="true"></span> {{this}} </div>
     {{/each}}
 </script>
 

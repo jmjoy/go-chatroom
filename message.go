@@ -144,7 +144,7 @@ func handleMessage(conn *websocket.Conn) {
 		context.Send(e.Value)
 	}
 
-	buf := make([]byte, 4096)
+	buf := make([]byte, 4096*1024*10)
 	for {
 		n, err := conn.Read(buf)
 		if err != nil {

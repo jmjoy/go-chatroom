@@ -28,7 +28,7 @@ $(function() {
     }
 
     // parse tpl
-    msgTpl = Handlebars.compile($("#msgTpl").html());
+    msgTpl = Handlebars.compile($("#msgTpl").html(), {"noEscape": true});
     userTpl = Handlebars.compile($("#userTpl").html());
 
     // event
@@ -44,13 +44,20 @@ $(function() {
 
 function initUIAndEvent() {
     $("#editor").wysiwyg();
+    $("#editor").focus();
 
     $("#pictureBtn").click(function() {
         $("#pictureFile").click();
     });
 
-    $("#sendBtn").click(function() {
-        console.log($("#editor").html());
+    $("#submitBtn").click(function() {
+        var content = $("#editor").html();
+        if (content == "") {
+            return;
+        }
+        wsSendMessage("message", {"content": content});
+        $("#editor").html("");
+        $("#editor").focus();
     });
 
     // toggle emotion panel 
@@ -68,10 +75,15 @@ function initUIAndEvent() {
 
     // click emotion
     $(".emotionBlock").click(function() {
-         var index = $(this).attr("data-index");
-         var img = $("<img />");
-         img.attr("src", "/static/emotion/"+index+".png");
-         $("#editor").append(img);
+        var index = $(this).attr("data-index");
+        var img = $("<img />");
+        img.attr("src", "/static/emotion/"+index+".png");
+        $("#editor").append(img);
+        $("#editor").focus();
+    });
+
+    $("#editor").bind('keyup', 'ctrl+return', function() {
+        $("#submitBtn").click();
     });
 }
 
