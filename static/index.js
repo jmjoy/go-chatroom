@@ -7,22 +7,11 @@ var userTpl = null;
 $(function() {
     if (!checkSupportHtml5()) {
         alert("您的浏览器不支持HTML5");
+        window.close();
         return;
     }
 
-    // adjust ui height
-    //$(window).resize(resetPanelHeight);
-    //resetPanelHeight();
-
-    $("#pictureBtn").click(function() {
-        $("#pictureFile").click();
-    });
-
-    $("#editor").wysiwyg();
-
-    $("#sendBtn").click(function() {
-        console.log($("#editor").html());
-    });
+    initUIAndEvent();
 
     // get userName
     userName = localStorage.getItem("user.name");
@@ -52,6 +41,41 @@ $(function() {
     ws.onmessage = wsOnMessage;
     ws.onerror = wsOnError;
 });
+
+function initUIAndEvent() {
+    $("#editor").wysiwyg();
+
+    $("#pictureBtn").click(function() {
+        $("#pictureFile").click();
+    });
+
+    $("#sendBtn").click(function() {
+        console.log($("#editor").html());
+    });
+
+    // toggle emotion panel 
+    $("#emotionBtn").click(function() {
+        var emtionBasePanel = $("#emotionBasePanel");
+        var msgBasePanelHeight = parseInt($("#msgBasePanel ").css("bottom"), 10);
+        if (emtionBasePanel.hasClass("hidden")) {
+            emtionBasePanel.removeClass("hidden");
+            $("#msgBasePanel ").css("bottom", (msgBasePanelHeight + 71) + 'px');
+            return;
+        }
+        emtionBasePanel.addClass("hidden");
+        $("#msgBasePanel ").css("bottom", (msgBasePanelHeight - 71) + 'px');
+    });
+
+    // click emotion
+    $(".emotionBlock").click(function() {
+         var offset = $(this).attr("data-offset");
+         var div = $("<div></div>");
+         div.addClass("emotionSpace ");
+         div.css("background-position", "0px -" + offset + "px");
+
+         $("#editor").append(div);
+    });
+}
 
 function submitMessage() {
     var content = $("#msgInput").val();
@@ -126,6 +150,7 @@ function checkSupportHtml5() {
   return !!document.createElement('canvas').getContext;
 }
 
+// 废弃
 function resetPanelHeight() {
     var winHeight = $(document).height();
     var userPanelHeight = winHeight - 110;

@@ -38,14 +38,6 @@ html, body {
     overflow-y: scroll;
 }
 
-.emotionDiv:link, .emotionDiv:visited, .emotionDiv:hover, .emotionDiv:active {
-    display: inline-block;
-    width: 25px;
-    height: 25px;
-    overflow: hidden;
-    background-image: url("/static/fface.gif");
-}
-
 #msgForm {
     position: absolute;
     left: 0;
