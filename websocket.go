@@ -1,11 +1,19 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"log"
+	"strconv"
 
 	simplejson "github.com/bitly/go-simplejson"
 	"golang.org/x/net/websocket"
+)
+
+var (
+	ErrPackageHeaderLength = errors.New("package header length error")
+	ErrContentLength       = errors.New("content too long or empty")
 )
 
 func handleWebsocket(conn *websocket.Conn) {
@@ -38,13 +46,16 @@ func handleWebsocket(conn *websocket.Conn) {
 		context.Send(e.Value)
 	}
 
-	buf := make([]byte, 4096*1024*10)
 	for {
-		n, err := conn.Read(buf)
+		req, err := protocol(conn)
 		if err != nil {
 			panic(err)
 		}
-		msg := buf[:n]
+		// TODO input reqeust and output reqeust
+		fmt.Printf("%#v", req)
+		continue
+
+		var msg []byte
 
 		// parse body json
 		json, err := simplejson.NewJson(msg)
@@ -85,4 +96,39 @@ func handleWebsocket(conn *websocket.Conn) {
 			})
 		}
 	}
+}
+
+func protocol(conn *websocket.Conn) (*Request, error) {
+	// read content length
+	buf := make([]byte, 8)
+	n, err := conn.Read(buf)
+	if err != nil {
+		return nil, err
+	}
+	if n != 8 {
+		return nil, ErrPackageHeaderLength
+	}
+
+	length, err := strconv.Atoi(string(buf))
+	if err != nil {
+		return nil, ErrPackageHeaderLength
+	}
+
+	// limit to 50M
+	if length < 1 || length > 50*1024*1024 {
+		return nil, ErrContentLength
+	}
+
+	// read all content by length
+	buf = make([]byte, length)
+	n, err = conn.Read(buf)
+	if err != nil {
+		return nil, err
+	}
+	if n != length {
+		return nil, ErrPackageHeaderLength
+	}
+
+	// parse request
+	return ParseRequest(buf)
 }

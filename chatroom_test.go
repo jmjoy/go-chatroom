@@ -8,9 +8,9 @@ import (
 
 var chReceiveExit = make(chan struct{})
 
-func TestHandleMessage(t *testing.T) {
+func _TestHandleMessage(t *testing.T) {
 	origin := "http://localhost/"
-	url := "ws://localhost:9000/message"
+	url := "ws://localhost:10001/ws"
 
 	ws, err := websocket.Dial(url, "", origin)
 	if err != nil {
@@ -44,4 +44,16 @@ func TestHandleMessage(t *testing.T) {
 		t.Log(v)
 	}
 
+}
+
+func TestProtocol(t *testing.T) {
+	origin := "http://localhost/"
+	url := "ws://localhost:10001/ws"
+
+	ws, err := websocket.Dial(url, "", origin)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	websocket.Message.Send(ws, "00000009"+"\ntype=a\nf")
 }
