@@ -2,10 +2,9 @@ package main
 
 import (
 	"flag"
-	"io"
+	"html/template"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	"golang.org/x/net/websocket"
@@ -16,7 +15,13 @@ var (
 	gIsHelp bool
 )
 
+var gEmotionNums [50]int
+
 func init() {
+	for i := 0; i < 50; i++ {
+		gEmotionNums[i] = 25 * i
+	}
+
 	flag.IntVar(&gPort, "p", 10000, "web server port")
 	flag.IntVar(&gPort, "port", 10000, "web server port")
 	flag.BoolVar(&gIsHelp, "h", false, "show help")
@@ -42,13 +47,14 @@ func router() {
 }
 
 func handleIndex(w http.ResponseWriter, r *http.Request) {
-	fr, err := os.Open("view/index.html")
+	t := template.New("index.html").Delims("<{", "}>")
+	t, err := t.ParseFiles("view/index.html")
 	if err != nil {
 		log.Println("handleIndex:", err)
 		http.NotFound(w, r)
 		return
 	}
-	defer fr.Close()
-
-	io.Copy(w, fr)
+	t.Execute(w, map[string]interface{}{
+		"emotionNums": gEmotionNums,
+	})
 }

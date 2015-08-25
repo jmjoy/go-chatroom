@@ -14,7 +14,15 @@ $(function() {
     //$(window).resize(resetPanelHeight);
     //resetPanelHeight();
 
+    $("#pictureBtn").click(function() {
+        $("#pictureFile").click();
+    });
+
     $("#editor").wysiwyg();
+
+    $("#sendBtn").click(function() {
+        console.log($("#editor").html());
+    });
 
     // get userName
     userName = localStorage.getItem("user.name");
