@@ -68,12 +68,10 @@ function initUIAndEvent() {
 
     // click emotion
     $(".emotionBlock").click(function() {
-         var offset = $(this).attr("data-offset");
-         var div = $("<div></div>");
-         div.addClass("emotionSpace ");
-         div.css("background-position", "0px -" + offset + "px");
-
-         $("#editor").append(div);
+         var index = $(this).attr("data-index");
+         var img = $("<img />");
+         img.attr("src", "/static/emotion/"+index+".png");
+         $("#editor").append(img);
     });
 }
 

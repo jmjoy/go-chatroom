@@ -34,8 +34,9 @@
             </div>
 
             <div id="emotionBasePanel" class="alert alert-warning">
-                <{range .emotionNums}> <{end}>
-                <a href="javascript:;" class="emotionBlock"><img src="/static/fface.gif" style="position: absolute; overflow: hidden; clip: rect(0px,25px,25px,0px);" /></a>
+                <{range .emotionNums}>
+                <a href="javascript:;" data-index="<{.}>" class="emotionBlock"><img src="/static/emotion/<{.}>.png" /></a>
+                <{end}>
             </div>
 
             <form id="msgForm" class="form-inline">

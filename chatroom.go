@@ -19,7 +19,7 @@ var gEmotionNums [50]int
 
 func init() {
 	for i := 0; i < 50; i++ {
-		gEmotionNums[i] = 25 * i
+		gEmotionNums[i] = i
 	}
 
 	flag.IntVar(&gPort, "p", 10000, "web server port")
