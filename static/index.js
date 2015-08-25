@@ -1,5 +1,5 @@
 var ws = null;
-var wsUrl = "ws://" + window.location.host + "/message";
+var wsUrl = null;
 var userName = null;
 var msgTpl = null;
 var userTpl = null;
@@ -10,6 +10,8 @@ $(function() {
         window.close();
         return;
     }
+
+    wsUrl = "ws://" + window.location.hostname + ":" + $("#wsPort").val() + "/ws";
 
     initUIAndEvent();
 
