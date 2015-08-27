@@ -15,14 +15,14 @@ var (
 
 type ContextPool map[*Context]struct{}
 
-func (this ContextPool) SendAll(msg interface{}) {
-	gMsgPool.PushBack(msg)
-	if gMsgPool.Len() > 10 {
-		gMsgPool.Remove(gMsgPool.Front())
-	}
+func (this ContextPool) SendAll(resp *Response) {
+	//gMsgPool.PushBack(resp *Response)
+	//if gMsgPool.Len() > 10 {
+	//gMsgPool.Remove(gMsgPool.Front())
+	//}
 
 	for c := range this {
-		c.Send(msg)
+		c.Send(resp)
 	}
 }
 
@@ -46,7 +46,7 @@ func (this ContextPool) Remove(c *Context) {
 
 type Context struct {
 	*websocket.Conn
-	ChanMsg chan interface{}
+	ChanMsg chan *Response
 
 	UserName string
 }
@@ -54,7 +54,7 @@ type Context struct {
 func NewContext(conn *websocket.Conn) *Context {
 	this := &Context{
 		Conn:    conn,
-		ChanMsg: make(chan interface{}),
+		ChanMsg: make(chan *Response),
 	}
 
 	go func() {
@@ -74,8 +74,8 @@ func NewContext(conn *websocket.Conn) *Context {
 	return this
 }
 
-func (this *Context) Send(msg interface{}) {
-	this.ChanMsg <- msg
+func (this *Context) Send(resp *Response) {
+	this.ChanMsg <- resp
 }
 
 func (this *Context) HasAuth() bool {
@@ -92,20 +92,14 @@ func (this *Context) Auth(data *simplejson.Json) {
 
 	// send message
 	userNames := gContexts.GetAllUserNames()
-	gContexts.SendAll(map[string]interface{}{
-		"type":      "auth",
-		"message":   userName + "进入聊天室",
-		"userNames": userNames,
-	})
+	//gContexts.SendAll(map[string]interface{}{
+	//"type":      "auth",
+	//"message":   userName + "进入聊天室",
+	//"userNames": userNames,
+	//})
 }
 
-func (this *Context) Message(data *simplejson.Json) {
-	content, err := data.Get("content").String()
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
+func (this *Context) Message(req *Request) {
 	gContexts.SendAll(map[string]interface{}{
 		"type":     "message",
 		"userName": this.UserName,

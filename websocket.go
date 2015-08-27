@@ -2,12 +2,10 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"strconv"
 
-	simplejson "github.com/bitly/go-simplejson"
 	"golang.org/x/net/websocket"
 )
 
@@ -49,45 +47,28 @@ func handleWebsocket(conn *websocket.Conn) {
 	for {
 		req, err := protocol(conn)
 		if err != nil {
+			// TODO handle error
 			panic(err)
 		}
-		// TODO input reqeust and output reqeust
-		fmt.Printf("%#v", req)
-		continue
-
-		var msg []byte
-
-		// parse body json
-		json, err := simplejson.NewJson(msg)
-		if err != nil {
-			panic(err)
-		}
-
-		// use type to forward handler
-		typ, err := json.Get("type").String()
-		if err != nil {
-			panic(err)
-		}
-		data := json.Get("data")
 
 		// auth operation
-		if typ == "auth" {
-			context.Auth(data)
+		if req.Type == "auth" {
+			//context.Auth(req)
 			continue
 		}
 
 		// below operation need check auth
 		if !context.HasAuth() {
-			context.Send(map[string]interface{}{
-				"type":    "error",
-				"message": "no ahth",
-			})
+			//context.Send(map[string]interface{}{
+			//"type":    "error",
+			//"message": "no ahth",
+			//})
 			continue
 		}
 
-		switch typ {
+		switch req.Type {
 		case "message":
-			context.Message(data)
+			context.Message(req)
 
 		default:
 			context.Send(map[string]interface{}{
