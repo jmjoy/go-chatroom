@@ -53,19 +53,7 @@
 
         <div id="otherContainer" class="col-xs-4">
             <div id="systemBasePanel" class="panel panel-default">
-                <div id="systemPanel" class="panel-body">
-
-
-                    <div class="alert alert-danger systemShowPanel" role="alert">hello world</div>
-                    <div class="alert alert-danger systemShowPanel" role="alert">hello world</div>
-                    <div class="alert alert-danger systemShowPanel" role="alert">hello world</div>
-                    <div class="alert alert-danger systemShowPanel" role="alert">hello world</div>
-                    <div class="alert alert-danger systemShowPanel" role="alert">hello world</div>
-                    <div class="alert alert-danger systemShowPanel" role="alert">hello world</div>
-
-
-
-                </div>
+                <div id="systemPanel" class="panel-body"></div>
             </div>
 
             <div id="userBasePanel" class="panel panel-default">
@@ -86,6 +74,10 @@
         </div>
         <p>{{content}}</p>
     </div>
+</script>
+
+<script id="systemTpl" type="text/template" charset="utf-8">
+    <div class="alert alert-{{color}} systemShowPanel" role="alert">{{msg}}</div>
 </script>
 
 <script id="userTpl" type="text/template" charset="utf-8">

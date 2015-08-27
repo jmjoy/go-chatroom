@@ -3,6 +3,7 @@ var wsUrl = null;
 var userName = null;
 var msgTpl = null;
 var userTpl = null;
+var systemTpl = null;
 
 $(function() {
     if (!checkSupportHtml5()) {
@@ -32,6 +33,7 @@ $(function() {
     // parse tpl
     msgTpl = Handlebars.compile($("#msgTpl").html(), {"noEscape": true});
     userTpl = Handlebars.compile($("#userTpl").html());
+    systemTpl = Handlebars.compile($("#systemTpl").html());
 
     // websocket
     ws = new WebSocket(wsUrl);
@@ -94,12 +96,17 @@ function wsOnMessage(e) {
     switch (obj.type) {
     case "join":
     case "leave":
-        //displayMessage("系统消息", data.message, "danger");
-        //displayUsers(data.userNames);
+        displaySystem(obj.message, "warning");
+        displayUsers($.parseJSON(e.data.substring(index+1)));
+        break;
+
+    case "error":
+        displaySystem(obj.message, "danger");
         break;
 
     case "message":
-        displayMessage(obj.userName, e.data.substring(index+1), "default");
+        displayMessage(obj.userName, e.data.substring(index+1));
+        break;
     }
 }
 
@@ -120,11 +127,10 @@ function wsOnError(e) {
     alert("出现异常：", e);
 }
 
-function displayMessage(userName, content, color) {
+function displayMessage(userName, content) {
     var data = {
         "user_name": userName,
         "content": content,
-        "color": color,
     };
     var html = msgTpl(data);
     $("#msgPanel").append(html);
@@ -136,6 +142,16 @@ function displayUsers(users) {
     var html = userTpl(data);
     $("#userPanel").html(html);
     $("#numUser").html(users.length);
+}
+
+function displaySystem(msg, color) {
+    var data = {
+        "msg":   msg,
+        "color": color,
+    };
+    var html = systemTpl(data);
+    $("#systemPanel").html(html);
+    scrollToButtom($("#systemPanel"));
 }
 
 function wsSendMessage(type, body, data) {

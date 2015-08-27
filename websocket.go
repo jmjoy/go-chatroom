@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"strconv"
 
@@ -41,9 +40,9 @@ func handleWebsocket(conn *websocket.Conn) {
 	}()
 
 	// send old message
-	//for e := gMsgPool.Front(); e != nil; e = e.Next() {
-	//context.Send(e.Value.(*Response))
-	//}
+	for e := gMsgPool.Front(); e != nil; e = e.Next() {
+		context.Send(e.Value.(*Response))
+	}
 
 	for {
 		req, err := protocol(conn)
@@ -72,8 +71,6 @@ func protocol(conn *websocket.Conn) (*Request, error) {
 		return nil, ErrPackageHeaderLength
 	}
 
-	fmt.Println("---" + string(buf) + "---")
-
 	length, err := strconv.ParseInt(string(buf), 10, 32)
 	if err != nil {
 		return nil, ErrPackageHeaderLength
@@ -91,8 +88,6 @@ func protocol(conn *websocket.Conn) (*Request, error) {
 	if i != length {
 		return nil, ErrPackageHeaderLength
 	}
-
-	fmt.Println("---" + string(buffer.Bytes()) + "---")
 
 	// parse request
 	return ParseRequest(buffer.Bytes())
