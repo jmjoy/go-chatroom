@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"strconv"
 
@@ -39,16 +41,16 @@ func handleWebsocket(conn *websocket.Conn) {
 	}()
 
 	// send old message
-	for e := gMsgPool.Front(); e != nil; e = e.Next() {
-		context.Send(e.Value.(*Response))
-	}
+	//for e := gMsgPool.Front(); e != nil; e = e.Next() {
+	//context.Send(e.Value.(*Response))
+	//}
 
 	for {
 		req, err := protocol(conn)
 		if err != nil {
 			// handle error
-			context.Send(NewResponse("error", nil, "message", "I also can break the protocol"))
-			continue
+			context.Send(NewResponse("error", nil, "message", err.Error()))
+			return
 		}
 
 		// service logic
@@ -70,7 +72,9 @@ func protocol(conn *websocket.Conn) (*Request, error) {
 		return nil, ErrPackageHeaderLength
 	}
 
-	length, err := strconv.Atoi(string(buf))
+	fmt.Println("---" + string(buf) + "---")
+
+	length, err := strconv.ParseInt(string(buf), 10, 32)
 	if err != nil {
 		return nil, ErrPackageHeaderLength
 	}
@@ -81,17 +85,17 @@ func protocol(conn *websocket.Conn) (*Request, error) {
 	}
 
 	// read all content by length
-	buf = make([]byte, length)
-	n, err = conn.Read(buf)
-	if err != nil {
-		return nil, err
-	}
-	if n != length {
+	buffer := new(bytes.Buffer)
+	i, err := io.CopyN(buffer, conn, length)
+
+	if i != length {
 		return nil, ErrPackageHeaderLength
 	}
 
+	fmt.Println("---" + string(buffer.Bytes()) + "---")
+
 	// parse request
-	return ParseRequest(buf)
+	return ParseRequest(buffer.Bytes())
 }
 
 func service(context *Context, req *Request) error {

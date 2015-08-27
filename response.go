@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"net/url"
 )
 
@@ -24,8 +23,6 @@ func NewResponse(typ string, body []byte, valuePairs ...string) *Response {
 	for i := 0; i < len(valuePairs); i += 2 {
 		values.Set(valuePairs[i], valuePairs[i+1])
 	}
-
-	fmt.Println(values)
 
 	return &Response{
 		Type:   typ,
