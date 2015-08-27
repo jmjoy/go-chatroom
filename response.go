@@ -34,7 +34,8 @@ func NewResponse(typ string, body []byte, valuePairs ...string) *Response {
 func (this *Response) EncodeBytes() ([]byte, error) {
 	var buffer bytes.Buffer
 
-	_, err := buffer.WriteString(this.Type + "\n" + this.Values.Encode() + "\n")
+	this.Values.Add("type", this.Type)
+	_, err := buffer.WriteString(this.Values.Encode() + "\n")
 	if err != nil {
 		return nil, err
 	}

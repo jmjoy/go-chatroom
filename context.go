@@ -2,9 +2,9 @@ package main
 
 import (
 	"container/list"
-	"log"
+	"encoding/json"
+	"errors"
 
-	"github.com/bitly/go-simplejson"
 	"golang.org/x/net/websocket"
 )
 
@@ -16,10 +16,10 @@ var (
 type ContextPool map[*Context]struct{}
 
 func (this ContextPool) SendAll(resp *Response) {
-	//gMsgPool.PushBack(resp *Response)
-	//if gMsgPool.Len() > 10 {
-	//gMsgPool.Remove(gMsgPool.Front())
-	//}
+	gMsgPool.PushBack(resp)
+	if gMsgPool.Len() > 10 {
+		gMsgPool.Remove(gMsgPool.Front())
+	}
 
 	for c := range this {
 		c.Send(resp)
@@ -46,28 +46,33 @@ func (this ContextPool) Remove(c *Context) {
 
 type Context struct {
 	*websocket.Conn
-	ChanMsg chan *Response
+	ChanResponse chan *Response
 
 	UserName string
 }
 
 func NewContext(conn *websocket.Conn) *Context {
 	this := &Context{
-		Conn:    conn,
-		ChanMsg: make(chan *Response),
+		Conn:         conn,
+		ChanResponse: make(chan *Response),
 	}
 
 	go func() {
 		for {
-			msg := <-this.ChanMsg
+			resp := <-this.ChanResponse
 			// close this connect
-			if msg == nil {
-				close(this.ChanMsg)
+			if resp == nil {
+				close(this.ChanResponse)
 				this.Conn.Close()
 				this = nil
 				return
 			}
-			websocket.JSON.Send(this.Conn, msg)
+			buf, err := resp.EncodeBytes()
+			if err != nil {
+				logError(err)
+				continue
+			}
+			this.Conn.Write(buf)
 		}
 	}()
 
@@ -75,34 +80,41 @@ func NewContext(conn *websocket.Conn) *Context {
 }
 
 func (this *Context) Send(resp *Response) {
-	this.ChanMsg <- resp
+	this.ChanResponse <- resp
 }
 
 func (this *Context) HasAuth() bool {
 	return this != nil && this.UserName != ""
 }
 
-func (this *Context) Auth(data *simplejson.Json) {
-	userName, err := data.Get("userName").String()
-	if err != nil {
-		log.Println(err)
-		return
+func (this *Context) Auth(req *Request) error {
+	userName := req.Values.Get("userName")
+	if userName == "" {
+		return errors.New("用户名不能为空")
 	}
 	this.UserName = userName
 
 	// send message
-	userNames := gContexts.GetAllUserNames()
-	//gContexts.SendAll(map[string]interface{}{
-	//"type":      "auth",
-	//"message":   userName + "进入聊天室",
-	//"userNames": userNames,
-	//})
+	allUsers, err := json.Marshal(gContexts.GetAllUserNames())
+	if err != nil {
+		return err
+	}
+
+	gContexts.SendAll(NewResponse("join", allUsers, "message", userName+"进入聊天室"))
+	return nil
 }
 
-func (this *Context) Message(req *Request) {
-	gContexts.SendAll(map[string]interface{}{
-		"type":     "message",
-		"userName": this.UserName,
-		"content":  content,
-	})
+func (this *Context) Message(req *Request) error {
+	gContexts.SendAll(NewResponse("message", req.Body, "userName", this.UserName))
+	return nil
+}
+
+func (this *Context) Leave() error {
+	allUsers, err := json.Marshal(gContexts.GetAllUserNames())
+	if err != nil {
+		return err
+	}
+
+	gContexts.SendAll(NewResponse("leave", allUsers, "message", this.UserName+"离开聊天室"))
+	return nil
 }

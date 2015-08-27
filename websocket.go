@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"io"
-	"log"
 	"strconv"
 
 	"golang.org/x/net/websocket"
@@ -22,59 +21,40 @@ func handleWebsocket(conn *websocket.Conn) {
 	defer func() {
 		context.Send(nil)
 		gContexts.Remove(context)
+		// if the user has auth, send leave message for all users
 		if context.HasAuth() {
-			gContexts.SendAll(map[string]interface{}{
-				"type":      "close",
-				"message":   context.UserName + "离开聊天室",
-				"userNames": gContexts.GetAllUserNames(),
-			})
+			err := context.Leave()
+			if err != nil {
+				logError(err)
+			}
 		}
 		context = nil
 
 		if err := recover(); err != nil {
 			// if err is io.EOF, maye be beacause of client closing
 			if err != io.EOF {
-				log.Println(err)
+				logError(err)
 			}
 		}
 	}()
 
 	// send old message
 	for e := gMsgPool.Front(); e != nil; e = e.Next() {
-		context.Send(e.Value)
+		context.Send(e.Value.(*Response))
 	}
 
 	for {
 		req, err := protocol(conn)
 		if err != nil {
-			// TODO handle error
-			panic(err)
-		}
-
-		// auth operation
-		if req.Type == "auth" {
-			//context.Auth(req)
+			// handle error
+			context.Send(NewResponse("error", nil, "message", "I also can break the protocol"))
 			continue
 		}
 
-		// below operation need check auth
-		if !context.HasAuth() {
-			//context.Send(map[string]interface{}{
-			//"type":    "error",
-			//"message": "no ahth",
-			//})
-			continue
-		}
-
-		switch req.Type {
-		case "message":
-			context.Message(req)
-
-		default:
-			context.Send(map[string]interface{}{
-				"type":    "error",
-				"message": "unknow type",
-			})
+		// service logic
+		err = service(context, req)
+		if err != nil {
+			context.Send(NewResponse("error", nil, "message", err.Error()))
 		}
 	}
 }
@@ -112,4 +92,35 @@ func protocol(conn *websocket.Conn) (*Request, error) {
 
 	// parse request
 	return ParseRequest(buf)
+}
+
+func service(context *Context, req *Request) error {
+	// auth operation
+	if req.Type == "auth" {
+		err := context.Auth(req)
+		if err != nil {
+			return err
+		}
+	}
+
+	// below operation need check auth
+	if !context.HasAuth() {
+		return errors.New("no auth")
+	}
+
+	var err error
+	switch req.Type {
+	case "message":
+		err = context.Message(req)
+
+	default:
+		return errors.New("unknow type")
+	}
+
+	// handle above error
+	if err != nil {
+		return errors.New("未知异常")
+	}
+
+	return nil
 }

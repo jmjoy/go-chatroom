@@ -56,4 +56,22 @@ func TestProtocol(t *testing.T) {
 	}
 
 	websocket.Message.Send(ws, "00000009"+"\ntype=a\nf")
+	buf := make([]byte, 4096)
+	n, err := ws.Read(buf)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(string(buf[:n]))
+
+	func() {
+		websocket.Message.Send(ws, "00000026"+"\ntype=auth&userName=jmjoy\n")
+		buf := make([]byte, 4096)
+		n, err := ws.Read(buf)
+		if err != nil {
+			t.Error(err)
+		}
+		t.Log(string(buf[:n]))
+	}()
+
+	ws.Close()
 }

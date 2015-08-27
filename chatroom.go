@@ -10,6 +10,12 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+const (
+	VERSION = "v1.0"
+
+	DEBUG = true
+)
+
 var (
 	gPort   int  // web server port
 	gWsPort int  // websocket server port
@@ -73,4 +79,12 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 		"emotionNums": gEmotionNums,
 		"wsPort":      gWsPort,
 	})
+}
+
+func logError(v interface{}) {
+	if DEBUG {
+		panic(v)
+		return
+	}
+	log.Println(v)
 }
