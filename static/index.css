@@ -38,7 +38,7 @@ html, body {
     overflow-y: scroll;
 }
 
-#msgForm {
+#sendMsgPanel {
     position: absolute;
     left: 0;
     right: 0;

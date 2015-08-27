@@ -12,6 +12,7 @@
     <script type="text/javascript" charset="utf-8" src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="http://apps.bdimg.com/libs/bootstrap/3.3.4/js/bootstrap.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="http://apps.bdimg.com/libs/handlebars.js/2.0.0-alpha.4/handlebars.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="http://cdn.staticfile.org/sprintf/1.0.2/sprintf.min.js"></script>
     <!--<script type="text/javascript" charset="utf-8" src="http://apps.bdimg.com/libs/prettify/r298/prettify.min.js"></script>-->
     <script type="text/javascript" charset="utf-8" src="/static/jquery.hotkeys.js"></script>
     <script type="text/javascript" charset="utf-8" src="/static/bootstrap-wysiwyg.min.js"></script>
@@ -39,7 +40,7 @@
                 <{end}>
             </div>
 
-            <form id="msgForm" class="form-inline">
+            <div id="sendMsgPanel" class="form-inline">
                 <div class="btn-toolbar" data-role="editor-toolbar" data-target="#editor" id="btnToolbar">
                     <button id="emotionBtn" class="btn btn-default"><span class="glyphicon glyphicon-heart" aria-hidden="true"></span></button>
                     <button id="pictureBtn" class="btn btn-default"><span class="glyphicon glyphicon-picture" aria-hidden="true"></span></button>
@@ -47,7 +48,7 @@
                 </div>
                 <div id="editor" class="form-control"></div>
                 <button id="submitBtn" class="btn btn-default">发送</button>
-            </form>
+            </div>
         </div>
 
         <div id="otherContainer" class="col-xs-4">

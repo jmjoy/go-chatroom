@@ -33,9 +33,6 @@ $(function() {
     msgTpl = Handlebars.compile($("#msgTpl").html(), {"noEscape": true});
     userTpl = Handlebars.compile($("#userTpl").html());
 
-    // event
-    $("#msgForm").submit(submitMessage);
-
     // websocket
     ws = new WebSocket(wsUrl);
     ws.onopen = wsOnOpen;
@@ -57,7 +54,7 @@ function initUIAndEvent() {
         if (content == "") {
             return;
         }
-        wsSendMessage("message", {"content": content});
+        wsSendMessage("message", content);
         $("#editor").html("");
         $("#editor").focus();
     });
@@ -89,15 +86,9 @@ function initUIAndEvent() {
     });
 }
 
-function submitMessage() {
-    var content = $("#msgInput").val();
-    $("#msgInput").val("");
-    wsSendMessage("message", {"content": content});
-    return false;
-}
-
 function wsOnMessage(e) {
-    var data = $.parseJSON(e.data);
+    console.log(e.data);return;
+
     switch (data.type) {
     case "auth":
     case "close":
@@ -110,7 +101,7 @@ function wsOnMessage(e) {
 }
 
 function wsOnOpen(e) {
-    wsSendMessage("auth", {
+    wsSendMessage("auth", "", {
         "userName": userName
     });
 }
@@ -144,12 +135,13 @@ function displayUsers(users) {
     $("#numUser").html(users.length);
 }
 
-function wsSendMessage(type, data) {
-    var json = {
-        "type": type,
-        "data": data
-    };
-    ws.send(JSON.stringify(json));
+function wsSendMessage(type, body, data) {
+    var values = $.extend(data, {"type": type})
+    var querys = $.param(values);
+    var content = "\n" + querys + "\n" + body;
+    var sends = sprintf("%08d", content.length) + content;
+
+    ws.send(sends);
 }
 
 function scrollToButtom(dom) {
