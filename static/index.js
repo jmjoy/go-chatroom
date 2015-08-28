@@ -96,12 +96,12 @@ function wsOnMessage(e) {
     switch (obj.type) {
     case "join":
     case "leave":
-        displaySystem(obj.message, "warning");
+        displaySystem(decodeURI(obj.message), "warning");
         displayUsers($.parseJSON(e.data.substring(index+1)));
         break;
 
     case "error":
-        displaySystem(obj.message, "danger");
+        displaySystem(decodeURI(obj.message), "danger");
         break;
 
     case "message":
