@@ -31,19 +31,19 @@ func NewResponse(typ string, body []byte, valuePairs ...string) *Response {
 	}
 }
 
-func (this *Response) EncodeBytes() ([]byte, error) {
+func (this *Response) EncodeBytes() []byte {
 	var buffer bytes.Buffer
 
 	this.Values.Add("type", this.Type)
 	_, err := buffer.WriteString(this.Values.Encode() + "\n")
 	if err != nil {
-		return nil, err
+		return []byte(err.Error())
 	}
 
 	_, err = buffer.Write(this.Body)
 	if err != nil {
-		return nil, err
+		return []byte(err.Error())
 	}
 
-	return buffer.Bytes(), nil
+	return buffer.Bytes()
 }

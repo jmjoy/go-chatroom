@@ -41,21 +41,21 @@ func handleWebsocket(conn *websocket.Conn) {
 
 	// send old message
 	for e := gMsgPool.Front(); e != nil; e = e.Next() {
-		context.Send(e.Value.(*Response))
+		context.Send(e.Value.([]byte))
 	}
 
 	for {
 		req, err := protocol(conn)
 		if err != nil {
 			// handle error
-			context.Send(NewResponse("error", nil, "message", err.Error()))
+			context.Send(NewResponse("error", nil, "message", err.Error()).EncodeBytes())
 			return
 		}
 
 		// service logic
 		err = service(context, req)
 		if err != nil {
-			context.Send(NewResponse("error", nil, "message", err.Error()))
+			context.Send(NewResponse("error", nil, "message", err.Error()).EncodeBytes())
 		}
 	}
 }

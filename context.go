@@ -15,14 +15,14 @@ var (
 
 type ContextPool map[*Context]struct{}
 
-func (this ContextPool) SendAll(resp *Response) {
-	gMsgPool.PushBack(resp)
+func (this ContextPool) SendAll(send []byte) {
+	gMsgPool.PushBack(send)
 	if gMsgPool.Len() > 10 {
 		gMsgPool.Remove(gMsgPool.Front())
 	}
 
 	for c := range this {
-		c.Send(resp)
+		c.Send(send)
 	}
 }
 
@@ -46,41 +46,36 @@ func (this ContextPool) Remove(c *Context) {
 
 type Context struct {
 	*websocket.Conn
-	ChanResponse chan *Response
+	ChanSend chan []byte
 
 	UserName string
 }
 
 func NewContext(conn *websocket.Conn) *Context {
 	this := &Context{
-		Conn:         conn,
-		ChanResponse: make(chan *Response),
+		Conn:     conn,
+		ChanSend: make(chan []byte),
 	}
 
 	go func() {
 		for {
-			resp := <-this.ChanResponse
+			send := <-this.ChanSend
 			// close this connect
-			if resp == nil {
-				close(this.ChanResponse)
+			if send == nil {
+				close(this.ChanSend)
 				this.Conn.Close()
 				this = nil
 				return
 			}
-			buf, err := resp.EncodeBytes()
-			if err != nil {
-				logError(err)
-				continue
-			}
-			this.Conn.Write(buf)
+			this.Conn.Write(send)
 		}
 	}()
 
 	return this
 }
 
-func (this *Context) Send(resp *Response) {
-	this.ChanResponse <- resp
+func (this *Context) Send(send []byte) {
+	this.ChanSend <- send
 }
 
 func (this *Context) HasAuth() bool {
@@ -100,12 +95,12 @@ func (this *Context) Auth(req *Request) error {
 		return err
 	}
 
-	gContexts.SendAll(NewResponse("join", allUsers, "message", userName+"进入聊天室"))
+	gContexts.SendAll(NewResponse("join", allUsers, "message", userName+"进入聊天室").EncodeBytes())
 	return nil
 }
 
 func (this *Context) Message(req *Request) error {
-	gContexts.SendAll(NewResponse("message", req.Body, "userName", this.UserName))
+	gContexts.SendAll(NewResponse("message", req.Body, "userName", this.UserName).EncodeBytes())
 	return nil
 }
 
@@ -115,6 +110,6 @@ func (this *Context) Leave() error {
 		return err
 	}
 
-	gContexts.SendAll(NewResponse("leave", allUsers, "message", this.UserName+"离开聊天室"))
+	gContexts.SendAll(NewResponse("leave", allUsers, "message", this.UserName+"离开聊天室").EncodeBytes())
 	return nil
 }
