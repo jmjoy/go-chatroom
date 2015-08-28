@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"net/url"
 )
 
@@ -32,6 +33,8 @@ func NewResponse(typ string, body []byte, valuePairs ...string) *Response {
 }
 
 func (this *Response) EncodeBytes() []byte {
+	fmt.Println("resp:", this)
+
 	var buffer bytes.Buffer
 
 	this.Values.Add("type", this.Type)

@@ -48,7 +48,9 @@ func handleWebsocket(conn *websocket.Conn) {
 		req, err := protocol(conn)
 		if err != nil {
 			// handle error
-			context.Send(NewResponse("error", nil, "message", err.Error()).EncodeBytes())
+			if err != io.EOF {
+				context.Send(NewResponse("error", nil, "message", err.Error()).EncodeBytes())
+			}
 			return
 		}
 
@@ -100,6 +102,7 @@ func service(context *Context, req *Request) error {
 		if err != nil {
 			return err
 		}
+		return nil
 	}
 
 	// below operation need check auth
