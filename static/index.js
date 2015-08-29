@@ -96,16 +96,17 @@ function wsOnMessage(e) {
     switch (obj.type) {
     case "join":
     case "leave":
-        displaySystem(decodeURI(obj.message), "warning");
+        displaySystem(decodeURIComponent(obj.message), "warning");
         displayUsers($.parseJSON(e.data.substring(index+1)));
         break;
 
     case "error":
-        displaySystem(decodeURI(obj.message), "danger");
+        displaySystem(decodeURIComponent(obj.message), "danger");
         break;
 
     case "message":
-        displayMessage(obj.userName, e.data.substring(index+1));
+        var body = e.data.substring(index+1);
+        displayMessage(decodeURIComponent(obj.userName), decodeURIComponent(obj.time), body);
         break;
     }
 }
@@ -127,10 +128,11 @@ function wsOnError(e) {
     alert("出现异常：", e);
 }
 
-function displayMessage(userName, content) {
+function displayMessage(userName, time, content) {
     var data = {
-        "user_name": userName,
-        "content": content,
+        "user_name":  userName,
+        "time":       time,
+        "content":    content,
     };
     var html = msgTpl(data);
     $("#msgPanel").append(html);
@@ -150,7 +152,7 @@ function displaySystem(msg, color) {
         "color": color,
     };
     var html = systemTpl(data);
-    $("#systemPanel").html(html);
+    $("#systemPanel").append(html);
     scrollToButtom($("#systemPanel"));
 }
 
@@ -166,6 +168,10 @@ function wsSendMessage(type, body, data) {
 function scrollToButtom(dom) {
     if(dom[0].scrollHeight - dom.scrollTop() <= dom.outerHeight() * 3) {
         dom.scrollTop(dom[0].scrollHeight);
+    }
+
+    if (dom.find(".alert").size() > 250) {
+        dom.find(".alert")[0].remove();
     }
 }
 

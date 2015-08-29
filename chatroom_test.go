@@ -2,6 +2,7 @@ package main_test
 
 import (
 	"testing"
+	"time"
 
 	"golang.org/x/net/websocket"
 )
@@ -73,10 +74,28 @@ func TestProtocol(t *testing.T) {
 	//    t.Log(string(buf[:n]))
 	//}()
 
+	//func() {
+	//    websocket.Message.Send(ws, "00000031\nuserName=__JM_Joy__&type=auth\n")
+	//    buf := make([]byte, 4096)
+	//    n, err := ws.Read(buf)
+	//    if err != nil {
+	//        t.Error(err)
+	//    }
+	//    t.Log(string(buf[:n]))
+	//}()
+
 	func() {
 		websocket.Message.Send(ws, "00000031\nuserName=__JM_Joy__&type=auth\n")
 		buf := make([]byte, 4096)
 		n, err := ws.Read(buf)
+		if err != nil {
+			t.Error(err)
+		}
+		t.Log(string(buf[:n]))
+		time.Sleep(time.Second)
+		websocket.Message.Send(ws, "00000047\ntype=message\na<script>alert('hello');</script>")
+		buf = make([]byte, 4096)
+		n, err = ws.Read(buf)
 		if err != nil {
 			t.Error(err)
 		}

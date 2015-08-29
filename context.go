@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"encoding/json"
 	"errors"
+	"time"
 
 	"golang.org/x/net/websocket"
 )
@@ -16,11 +17,6 @@ var (
 type ContextPool map[*Context]struct{}
 
 func (this ContextPool) SendAll(send []byte) {
-	gMsgPool.PushBack(send)
-	if gMsgPool.Len() > 10 {
-		gMsgPool.Remove(gMsgPool.Front())
-	}
-
 	for c := range this {
 		c.Send(send)
 	}
@@ -48,13 +44,16 @@ type Context struct {
 	*websocket.Conn
 	ChanSend chan []byte
 
-	UserName string
+	UserName    string
+	SendedTime  time.Time // 上一次发送时间
+	RefusedTime int64     // 发送被拒绝次数
 }
 
 func NewContext(conn *websocket.Conn) *Context {
 	this := &Context{
-		Conn:     conn,
-		ChanSend: make(chan []byte),
+		Conn:       conn,
+		ChanSend:   make(chan []byte),
+		SendedTime: time.Now(),
 	}
 
 	go func() {
@@ -99,8 +98,33 @@ func (this *Context) Auth(req *Request) error {
 	return nil
 }
 
-func (this *Context) Message(req *Request) error {
-	gContexts.SendAll(NewResponse("message", req.Body, "userName", this.UserName).EncodeBytes())
+func (this *Context) Message(req *Request, now time.Time) error {
+	formatedTime := now.Format(time.Kitchen)
+
+	// check can send
+	if now.Sub(this.SendedTime).Seconds() < 0.5 {
+		this.SendedTime = now
+		if this.RefusedTime < 10 {
+			this.RefusedTime++
+		}
+		send := NewResponse("error", nil, "message", "您说话太频繁了").EncodeBytes()
+		this.Send(send)
+		return nil
+	}
+
+	send := NewResponse("message", escapeBody(req.Body), "userName", this.UserName, "time", formatedTime).EncodeBytes()
+
+	gMsgPool.PushBack(send)
+	if gMsgPool.Len() > 10 {
+		gMsgPool.Remove(gMsgPool.Front())
+	}
+
+	gContexts.SendAll(send)
+
+	// save the send time
+	this.SendedTime = now
+	this.RefusedTime = 0
+
 	return nil
 }
 

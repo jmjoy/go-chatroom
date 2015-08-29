@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"net/url"
 )
 
@@ -55,7 +54,7 @@ func ParseRequest(buf []byte) (*Request, error) {
 		Body:          body,
 	}
 
-	fmt.Println("req:", req)
+	//fmt.Println("req:", req)
 
 	return req, nil
 }

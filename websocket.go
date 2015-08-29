@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"strconv"
+	"time"
 
 	"golang.org/x/net/websocket"
 )
@@ -113,7 +114,7 @@ func service(context *Context, req *Request) error {
 	var err error
 	switch req.Type {
 	case "message":
-		err = context.Message(req)
+		err = context.Message(req, time.Now())
 
 	default:
 		return errors.New("unknow type")

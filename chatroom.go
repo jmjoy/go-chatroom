@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
+	"html"
 	"html/template"
 	"log"
 	"net/http"
+	"regexp"
 
 	"golang.org/x/net/websocket"
 )
@@ -22,6 +25,8 @@ var (
 	gIsHelp bool // show help info
 
 	gEmotionNums [50]int
+
+	gRegEscape = regexp.MustCompile(`<script[\s\S]*?>[\s\S]*?</script>`)
 )
 
 func init() {
@@ -87,4 +92,21 @@ func logError(v interface{}) {
 		return
 	}
 	log.Println(v)
+}
+
+func escapeBody(body []byte) []byte {
+	indexss := gRegEscape.FindAllIndex(body, -1)
+	if len(indexss) == 0 {
+		return body
+	}
+
+	var buffer bytes.Buffer
+	var i int
+	for _, indexs := range indexss {
+		fmt.Println(i, indexs[0], indexs[1])
+		buffer.Write(body[i:indexs[0]])
+		buffer.WriteString(html.EscapeString(string(body[indexs[0]:indexs[1]])))
+		i = indexs[1]
+	}
+	return buffer.Bytes()
 }
