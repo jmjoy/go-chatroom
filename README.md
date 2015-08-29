@@ -1,5 +1,3 @@
-https://raw.githubusercontent.com/jmjoy/go-chatroom/master/shortcut.jpg
-
 # go-chatroom
 
 GO写的Websocket聊天室
