@@ -9,7 +9,9 @@ var waitGroup = 0;
 
 var delims = {
     left:  "(#####)",
-    right: "(%%%%%)"
+    right: "(%%%%%)",
+
+    reg: "\\(#####\\).*?\\(%%%%%\\)"
 };
 
 $(function() {
@@ -214,14 +216,28 @@ function wsOnError(e) {
 
 function displayMessage(userName, time, content) {
     content = htmlspecialchars(content);
+    content = nl2br(content);
 
     // handle emotions and images
-    var reg = new RegExp(delims.left + ".*?" + delims.right, "g");
-    content.replace(reg, function(word) {
-        console.log(word);
-        var media = word.substr(delims.left.length-1, -delims.right.length);
-        console.log(media);
+    content = content.replace(new RegExp(delims.reg, "g"), function(word) {
+        var media = word.slice(delims.left.length, -delims.right.length);
+        switch (media[0]) {
+        case "E":
+            var img = $("<img>");
+            var index = media.substr(1);
+            img.attr("src", "/static/emotion/" + index + ".png");
+            return $("<div>").html(img).html();
+
+        case "I":
+            var img = $("<img>");
+            var path = media.substr(1);
+            img.attr("src", "/upload/" + path);
+            img.css("max-width", "100%");
+            return $("<div>").html(img).html();
+        }
     });
+
+    console.log(content);
 
     var data = {
         "user_name":  userName,
@@ -324,6 +340,11 @@ function htmlspecialchars_decode(str) {
         str = str.replace(/&amp;/ig, '&'); /* must do &amp; last */
     }
     return str;
+}
+
+function nl2br (str, is_xhtml) {
+    var breakTag = (is_xhtml || typeof is_xhtml === 'undefined') ? '<br />' : '<br>';
+    return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1' + breakTag + '$2');
 }
 
 // 废弃
