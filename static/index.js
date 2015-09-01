@@ -237,8 +237,6 @@ function displayMessage(userName, time, content) {
         }
     });
 
-    console.log(content);
-
     var data = {
         "user_name":  userName,
         "time":       time,
