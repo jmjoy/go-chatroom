@@ -38,6 +38,13 @@ html, body {
     overflow-y: scroll;
 }
 
+.emotionBlock {
+    display: inline-block;
+    width: 25px;
+    height: 25px;
+    background: url('/static/emotion/fface.gif');
+}
+
 #sendMsgPanel {
     position: absolute;
     left: 0;
