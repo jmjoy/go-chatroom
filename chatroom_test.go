@@ -2,7 +2,6 @@ package main_test
 
 import (
 	"testing"
-	"time"
 
 	"golang.org/x/net/websocket"
 )
@@ -56,51 +55,23 @@ func TestProtocol(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	//websocket.Message.Send(ws, "00000009"+"\ntype=a\nf")
-	//buf := make([]byte, 4096)
-	//n, err := ws.Read(buf)
-	//if err != nil {
-	//    t.Error(err)
-	//}
-	//t.Log(string(buf[:n]))
+	websocket.Message.Send(ws, "00000031\nuserName=__Tester__&type=auth\n")
+	readConn(t, ws)
 
-	//func() {
-	//    websocket.Message.Send(ws, "00000026"+"\ntype=auth&userName=jmjoy\n")
-	//    buf := make([]byte, 4096)
-	//    n, err := ws.Read(buf)
-	//    if err != nil {
-	//        t.Error(err)
-	//    }
-	//    t.Log(string(buf[:n]))
-	//}()
+	//websocket.Message.Send(ws, "00000047\ntype=message\na<script>alert('hello');</script>")
+	//readConn(t, ws)
 
-	//func() {
-	//    websocket.Message.Send(ws, "00000031\nuserName=__JM_Joy__&type=auth\n")
-	//    buf := make([]byte, 4096)
-	//    n, err := ws.Read(buf)
-	//    if err != nil {
-	//        t.Error(err)
-	//    }
-	//    t.Log(string(buf[:n]))
-	//}()
-
-	func() {
-		websocket.Message.Send(ws, "00000031\nuserName=__JM_Joy__&type=auth\n")
-		buf := make([]byte, 4096)
-		n, err := ws.Read(buf)
-		if err != nil {
-			t.Error(err)
-		}
-		t.Log(string(buf[:n]))
-		time.Sleep(time.Second)
-		websocket.Message.Send(ws, "00000047\ntype=message\na<script>alert('hello');</script>")
-		buf = make([]byte, 4096)
-		n, err = ws.Read(buf)
-		if err != nil {
-			t.Error(err)
-		}
-		t.Log(string(buf[:n]))
-	}()
+	websocket.Message.Send(ws, "00000021\ntype=image\n123456789")
+	readConn(t, ws)
 
 	ws.Close()
+}
+
+func readConn(t *testing.T, ws *websocket.Conn) {
+	buf := make([]byte, 4096)
+	n, err := ws.Read(buf)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(string(buf[:n]))
 }

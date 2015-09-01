@@ -116,13 +116,16 @@ func service(context *Context, req *Request) error {
 	case "message":
 		err = context.Message(req, time.Now())
 
+	case "image":
+		err = context.Image(req, time.Now())
+
 	default:
 		return errors.New("unknow type")
 	}
 
 	// handle above error
 	if err != nil {
-		return errors.New("未知异常")
+		return errors.New("未知异常: " + err.Error())
 	}
 
 	return nil

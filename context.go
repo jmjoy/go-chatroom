@@ -1,10 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"container/list"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
 	"time"
+
+	"github.com/pborman/uuid"
 
 	"golang.org/x/net/websocket"
 )
@@ -124,6 +130,48 @@ func (this *Context) Message(req *Request, now time.Time) error {
 	// save the send time
 	this.SendedTime = now
 	this.RefusedTime = 0
+
+	return nil
+}
+
+// Image
+func (this *Context) Image(req *Request, now time.Time) error {
+	dateDir := now.Format("060102")
+	dirPath := filepath.Join("upload", dateDir)
+
+	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
+		err = os.Mkdir(dirPath, 0777)
+		if err != nil {
+			return err
+		}
+
+		// create index.html to forbidden index directory
+		fp, err := os.Create(filepath.Join(dirPath, "index.html"))
+		if err != nil {
+			return err
+		}
+		fp.Close()
+	}
+
+	resourceId := uuid.New()
+
+	fw, err := os.Create(filepath.Join(dirPath, resourceId))
+	if err != nil {
+		return err
+	}
+	defer fw.Close()
+
+	// write to file
+	buffer := bytes.NewBuffer(req.Body)
+	_, err = buffer.WriteTo(fw)
+	if err != nil {
+		return err
+	}
+
+	// every resource has a uuid pathid
+	pathId := fmt.Sprintf("%s/%s", dateDir, resourceId)
+
+	this.Send(NewResponse("image", nil, "pathid", pathId).EncodeBytes())
 
 	return nil
 }
