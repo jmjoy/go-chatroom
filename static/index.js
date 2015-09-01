@@ -117,6 +117,7 @@ function initUIAndEvent() {
             wsSendMessage("image", imgDatas[i], {"index": i});
         }
 
+        // use setInterval to simulate channel
         var waitTimer = setInterval(function(data) {
             if (waitGroup > 0) {
                 return;
@@ -160,7 +161,7 @@ function initUIAndEvent() {
 }
 
 function sendMessage(content) {
-    wsSendMessage("message", content, {});
+    wsSendMessage("message", htmlspecialchars_decode(content), {});
     $("#editor").html("");
     $("#editor").focus();
 }
@@ -187,7 +188,9 @@ function wsOnMessage(e) {
         break;
 
     case "image":
-        singleCC.find("img[data-index="+obj.index+"]").after(delims.left + "I" + obj.pathid + delims.right).remove();
+        singleCC.find("img[data-index="+obj.index+"]").
+            after(delims.left + "I" + decodeURIComponent(obj.pathid) + delims.right).
+            remove();
         waitGroup--;
     }
 }
@@ -210,6 +213,16 @@ function wsOnError(e) {
 }
 
 function displayMessage(userName, time, content) {
+    content = htmlspecialchars(content);
+
+    // handle emotions and images
+    var reg = new RegExp(delims.left + ".*?" + delims.right, "g");
+    content.replace(reg, function(word) {
+        console.log(word);
+        var media = word.substr(delims.left.length-1, -delims.right.length);
+        console.log(media);
+    });
+
     var data = {
         "user_name":  userName,
         "time":       time,
@@ -291,6 +304,28 @@ function getQueryParameters(str) {
   return (str || document.location.search).replace(/(^\?)/,'').split("&").map(function(n){return n = n.split("="),this[n[0]] = n[1],this}.bind({}))[0];
 }
 
+function htmlspecialchars(str) {
+    if (typeof(str) == "string") {
+        str = str.replace(/&/g, "&amp;"); /* must do &amp; first */
+        str = str.replace(/"/g, "&quot;");
+        str = str.replace(/'/g, "&#039;");
+        str = str.replace(/</g, "&lt;");
+        str = str.replace(/>/g, "&gt;");
+    }
+    return str;
+}
+
+function htmlspecialchars_decode(str) {
+    if (typeof(str) == "string") {
+        str = str.replace(/&gt;/ig, ">");
+        str = str.replace(/&lt;/ig, "<");
+        str = str.replace(/&#039;/g, "'");
+        str = str.replace(/&quot;/ig, '"');
+        str = str.replace(/&amp;/ig, '&'); /* must do &amp; last */
+    }
+    return str;
+}
+
 // 废弃
 function resetPanelHeight() {
     var winHeight = $(document).height();
@@ -304,3 +339,4 @@ function resetPanelHeight() {
         $("#msgPanel").css("height", msgPanelHeight);
     }
 }
+
