@@ -4,6 +4,8 @@ var userName = null;
 var msgTpl = null;
 var userTpl = null;
 var systemTpl = null;
+var singleCC = null;
+var waitGroup = 0;
 
 $(function() {
     if (!checkSupportHtml5()) {
@@ -52,13 +54,73 @@ function initUIAndEvent() {
     });
 
     $("#submitBtn").click(function() {
+        // check if there is unfinish request
+        if (waitGroup > 0) {
+            return;
+        }
+
+        // get content
         var content = $("#editor").html();
         if (content == "") {
             return;
         }
-        wsSendMessage("message", content);
-        $("#editor").html("");
-        $("#editor").focus();
+
+        // parse content
+        var cc = $("<cc>" + content + "</cc>");
+        cc.find("br").after("\n").remove();
+        cc.find("div").each(function() {
+            var html = $(this).html();
+            $(this).after(html + "\n").remove();
+        });
+
+        cc.find("img[data-type=emotion]").each(function() {
+            var index = $(this).attr("data-index");
+            var left = "(#####)";
+            var right = "(%%%%%)";
+            $(this).after(left + "E" + index + right).remove();
+        });
+
+        var imgDatas = [];
+        // handle img upload
+        cc.find("img").each(function() {
+            var srcData = $(this).attr("src");
+            if (srcData.indexOf("data:image") != 0) {
+                return;
+            }
+            var index = srcData.indexOf(",");
+            if (index == -1) {
+                return;
+            }
+            var base64Data = srcData.substr(index + 1);
+            imgDatas[waitGroup] = atob(base64Data);
+            $(this).attr("data-index", waitGroup);
+            waitGroup++;
+        });
+
+        // no images upload
+        if (waitGroup == 0) {
+            sendMessage(cc.html());
+            return;
+        }
+
+        singleCC = cc;
+        for (var i = 0; i < imgDatas.length; i++) {
+            wsSendMessage("image", imgDatas[i], {});
+        }
+
+        var waitTimer = setInterval(function(data) {
+            if (waitGroup > 0) {
+                return;
+            }
+
+            // has finished all image upload
+            clearInterval(waitTimer);
+
+            //
+            console.log(cc.html());
+            return;
+
+        }, 350);
     });
 
     // toggle emotion panel 
@@ -79,6 +141,8 @@ function initUIAndEvent() {
         var index = $(this).attr("data-index");
         var img = $("<img />");
         img.attr("src", "/static/emotion/"+index+".png");
+        img.attr("data-type", "emotion");
+        img.attr("data-index", index);
         $("#editor").append(img);
         $("#editor").focus();
     });
@@ -86,6 +150,12 @@ function initUIAndEvent() {
     $("#editor").bind('keyup', 'ctrl+return', function() {
         $("#submitBtn").click();
     });
+}
+
+function sendMessage(content) {
+    wsSendMessage("message", content, {});
+    $("#editor").html("");
+    $("#editor").focus();
 }
 
 function wsOnMessage(e) {

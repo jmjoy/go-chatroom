@@ -9,12 +9,13 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"strconv"
 
 	"golang.org/x/net/websocket"
 )
 
 const (
-	VERSION = "v1.0"
+	VERSION = "v0.1"
 
 	DEBUG = true
 )
@@ -66,14 +67,36 @@ func main() {
 func routerWeb() {
 	http.HandleFunc("/", handleIndex)
 	http.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir("static"))))
+	http.Handle("/upload/", http.StripPrefix("/upload", http.FileServer(http.Dir("upload"))))
 }
 
 func routerWebsocket(mux *http.ServeMux) {
 	mux.Handle("/ws", websocket.Handler(handleWebsocket))
 }
 
+var gFuncMap = template.FuncMap{
+	"op": operate,
+}
+
+func operate(op string, a, b int) string {
+	var result int
+
+	switch op {
+	case "+":
+		result = a + b
+	case "-":
+		result = a - b
+	case "*":
+		result = a * b
+	case "/":
+		result = a / b
+	}
+
+	return strconv.Itoa(result)
+}
+
 func handleIndex(w http.ResponseWriter, r *http.Request) {
-	t := template.New("index.html").Delims("<{", "}>")
+	t := template.New("index.html").Delims("<{", "}>").Funcs(gFuncMap)
 	t, err := t.ParseFiles("view/index.html")
 	if err != nil {
 		log.Println("handleIndex:", err)

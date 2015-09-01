@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/pborman/uuid"
+	"code.google.com/p/go-uuid/uuid"
 
 	"golang.org/x/net/websocket"
 )
