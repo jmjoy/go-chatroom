@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"container/list"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -118,7 +119,7 @@ func (this *Context) Message(req *Request, now time.Time) error {
 		return nil
 	}
 
-	send := NewResponse("message", escapeBody(req.Body), "userName", this.UserName, "time", formatedTime).EncodeBytes()
+	send := NewResponse("message", req.Body, "userName", this.UserName, "time", formatedTime).EncodeBytes()
 
 	gMsgPool.PushBack(send)
 	if gMsgPool.Len() > 10 {
@@ -161,8 +162,14 @@ func (this *Context) Image(req *Request, now time.Time) error {
 	}
 	defer fw.Close()
 
+	outBuf := make([]byte, len(req.Body))
+	n, err := base64.StdEncoding.Decode(outBuf, req.Body)
+	if err != nil {
+		return err
+	}
+
 	// write to file
-	buffer := bytes.NewBuffer(req.Body)
+	buffer := bytes.NewBuffer(outBuf[:n])
 	_, err = buffer.WriteTo(fw)
 	if err != nil {
 		return err
@@ -171,7 +178,7 @@ func (this *Context) Image(req *Request, now time.Time) error {
 	// every resource has a uuid pathid
 	pathId := fmt.Sprintf("%s/%s", dateDir, resourceId)
 
-	this.Send(NewResponse("image", nil, "pathid", pathId).EncodeBytes())
+	this.Send(NewResponse("image", nil, "pathid", pathId, "index", req.Values.Get("index")).EncodeBytes())
 
 	return nil
 }

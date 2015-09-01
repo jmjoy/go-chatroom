@@ -7,6 +7,11 @@ var systemTpl = null;
 var singleCC = null;
 var waitGroup = 0;
 
+var delims = {
+    left:  "(#####)",
+    right: "(%%%%%)"
+};
+
 $(function() {
     if (!checkSupportHtml5()) {
         alert("您的浏览器不支持HTML5");
@@ -75,9 +80,7 @@ function initUIAndEvent() {
 
         cc.find("img[data-type=emotion]").each(function() {
             var index = $(this).attr("data-index");
-            var left = "(#####)";
-            var right = "(%%%%%)";
-            $(this).after(left + "E" + index + right).remove();
+            $(this).after(delims.left + "E" + index + delims.right).remove();
         });
 
         var imgDatas = [];
@@ -91,8 +94,14 @@ function initUIAndEvent() {
             if (index == -1) {
                 return;
             }
-            var base64Data = srcData.substr(index + 1);
-            imgDatas[waitGroup] = atob(base64Data);
+            //var base64Data = srcData.substr(index + 1);
+            //imgDatas[waitGroup] = atob(base64Data);
+            imgDatas[waitGroup] = srcData.substr(index + 1);
+
+            //var blob = new Blob(imgDatas[waitGroup]);
+            //console.log(blob.size);
+            //throw '';
+
             $(this).attr("data-index", waitGroup);
             waitGroup++;
         });
@@ -105,7 +114,7 @@ function initUIAndEvent() {
 
         singleCC = cc;
         for (var i = 0; i < imgDatas.length; i++) {
-            wsSendMessage("image", imgDatas[i], {});
+            wsSendMessage("image", imgDatas[i], {"index": i});
         }
 
         var waitTimer = setInterval(function(data) {
@@ -116,9 +125,7 @@ function initUIAndEvent() {
             // has finished all image upload
             clearInterval(waitTimer);
 
-            //
-            console.log(cc.html());
-            return;
+            sendMessage(singleCC.html());
 
         }, 350);
     });
@@ -178,6 +185,10 @@ function wsOnMessage(e) {
         var body = e.data.substring(index+1);
         displayMessage(decodeURIComponent(obj.userName), decodeURIComponent(obj.time), body);
         break;
+
+    case "image":
+        singleCC.find("img[data-index="+obj.index+"]").after(delims.left + "I" + obj.pathid + delims.right).remove();
+        waitGroup--;
     }
 }
 
