@@ -43,6 +43,7 @@ html, body {
     width: 25px;
     height: 25px;
     background: url('/static/emotion/fface.gif');
+    border: none;
 }
 
 #sendMsgPanel {

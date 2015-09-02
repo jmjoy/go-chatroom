@@ -150,9 +150,14 @@ function initUIAndEvent() {
     $(".emotionBlock").click(function() {
         var index = $(this).attr("data-index");
         var img = $("<img />");
-        img.attr("src", "/static/emotion/"+index+".png");
+        img.attr("src", "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
         img.attr("data-type", "emotion");
         img.attr("data-index", index);
+
+        var offset = 25 * index;
+        img.addClass("emotionBlock");
+        img.css("background-position", "0 -" + offset + "px");
+
         $("#editor").append(img);
         $("#editor").focus();
     });
@@ -223,10 +228,12 @@ function displayMessage(userName, time, content) {
         var media = word.slice(delims.left.length, -delims.right.length);
         switch (media[0]) {
         case "E":
-            var img = $("<img>");
+            var span = $("<span>");
             var index = media.substr(1);
-            img.attr("src", "/static/emotion/" + index + ".png");
-            return $("<div>").html(img).html();
+            var offset = 25 * index;
+            span.addClass("emotionBlock");
+            span.css("background-position", "0 -" + offset + "px");
+            return $("<div>").html(span).html();
 
         case "I":
             var img = $("<img>");
