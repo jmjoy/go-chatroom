@@ -53,7 +53,11 @@ $(function() {
 });
 
 function initUIAndEvent() {
-    $("#editor").wysiwyg();
+    $("#editor").wysiwyg({
+        hotKeys: {
+            'return': ''
+        }
+    });
     $("#editor").focus();
 
     $("#pictureBtn").click(function() {
@@ -162,7 +166,7 @@ function initUIAndEvent() {
         $("#editor").focus();
     });
 
-    $("#editor").bind('keyup', 'ctrl+return', function() {
+    $("#editor").bind('keyup', 'return', function() {
         $("#submitBtn").click();
     });
 }
