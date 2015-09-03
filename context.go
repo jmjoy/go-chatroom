@@ -25,7 +25,7 @@ type ContextPool map[*Context]struct{}
 
 func (this ContextPool) SendAll(send []byte) {
 	for c := range this {
-		c.Send(send)
+		go c.Send(send)
 	}
 }
 
@@ -65,12 +65,10 @@ func NewContext(conn *websocket.Conn) *Context {
 
 	go func() {
 		for {
-			send := <-this.ChanSend
+			send, ok := <-this.ChanSend
 			// close this connect
-			if send == nil {
-				close(this.ChanSend)
-				this.Conn.Close()
-				this = nil
+			if !ok || send == nil {
+				this.Close()
 				return
 			}
 			this.Conn.Write(send)
@@ -191,4 +189,10 @@ func (this *Context) Leave() error {
 
 	gContexts.SendAll(NewResponse("leave", allUsers, "message", this.UserName+"离开聊天室").EncodeBytes())
 	return nil
+}
+
+func (this *Context) Close() {
+	close(this.ChanSend)
+	this.Conn.Close()
+	this = nil
 }
