@@ -175,17 +175,12 @@ function sendMessage(content) {
     $("#submitBtn").addClass("disabled");
     $("#submitBtn").text("发送中");
 
-    alert("");
-
     wsSendMessage("message", htmlspecialchars_decode(content), {});
     $("#editor").html("");
     $("#editor").focus();
 
     $("#submitBtn").removeClass("disabled");
     $("#submitBtn").text("发送");
-
-    alert("");
-
 }
 
 function wsOnMessage(e) {
