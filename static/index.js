@@ -76,6 +76,10 @@ function initUIAndEvent() {
             return;
         }
 
+        // ui: disable
+        $("#submitBtn").addClass("disabled");
+        $("#submitBtn").text("发送中");
+
         // parse content
         var cc = $("<cc>" + content + "</cc>");
         cc.find("br").after("\n").remove();
@@ -134,6 +138,10 @@ function initUIAndEvent() {
 
             sendMessage(singleCC.html());
 
+            // ui: reset
+            $("#submitBtn").removeClass("disabled");
+            $("#submitBtn").text("发送");
+
         }, 350);
     });
 
@@ -172,15 +180,9 @@ function initUIAndEvent() {
 }
 
 function sendMessage(content) {
-    $("#submitBtn").addClass("disabled");
-    $("#submitBtn").text("发送中");
-
     wsSendMessage("message", htmlspecialchars_decode(content), {});
     $("#editor").html("");
     $("#editor").focus();
-
-    $("#submitBtn").removeClass("disabled");
-    $("#submitBtn").text("发送");
 }
 
 function wsOnMessage(e) {
