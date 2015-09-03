@@ -244,7 +244,15 @@ function displayMessage(userName, time, content) {
             var path = media.substr(1);
             img.attr("src", "/upload/" + path);
             img.css("max-width", "100%");
-            img.load(function() { scrollToButtom($("#msgPanel")) });
+
+            var isBottom = isScrollBottom($("#msgPanel"));
+            var fn = function(e) {
+                if (isBottom) {
+                    scrollButtom($("#msgPanel"));
+                }
+            };
+            img.load(fn);
+            img.error(fn);
             return $("<div>").html(img).html();
         }
     });
@@ -255,8 +263,9 @@ function displayMessage(userName, time, content) {
         "content":    content,
     };
     var html = msgTpl(data);
-    $("#msgPanel").append(html);
-    scrollToButtom($("#msgPanel"));
+    scrollToButtom($("#msgPanel"), function(){
+        $("#msgPanel").append(html);
+    });
 }
 
 function displayUsers(users) {
@@ -272,8 +281,9 @@ function displaySystem(msg, color) {
         "color": color,
     };
     var html = systemTpl(data);
-    $("#systemPanel").append(html);
-    scrollToButtom($("#systemPanel"));
+    scrollToButtom($("#systemPanel"), function() {
+        $("#systemPanel").append(html);
+    });
 }
 
 function wsSendMessage(type, body, data) {
@@ -285,14 +295,27 @@ function wsSendMessage(type, body, data) {
     ws.send(sends);
 }
 
-function scrollToButtom(dom) {
-    if(dom[0].scrollHeight - dom.scrollTop() <= dom.outerHeight() * 3) {
-        dom.scrollTop(dom[0].scrollHeight);
+function scrollToButtom(dom, fnAppend) {
+    var isBottom = isScrollBottom(dom);
+    if (isBottom) {
+        fnAppend();
+        scrollButtom(dom);
+
+    } else {
+        fnAppend();
     }
 
     if (dom.find(".alert").size() > 250) {
         dom.find(".alert")[0].remove();
     }
+}
+
+function scrollButtom(dom) {
+    dom.scrollTop(999999999);
+}
+
+function isScrollBottom(dom) {
+    return dom[0].scrollHeight - dom.scrollTop() == dom.outerHeight();
 }
 
 function checkSupportHtml5() {
