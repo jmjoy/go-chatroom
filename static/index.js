@@ -244,6 +244,7 @@ function displayMessage(userName, time, content) {
             var path = media.substr(1);
             img.attr("src", "/upload/" + path);
             img.css("max-width", "100%");
+            img.load(function() { scrollToButtom($("#msgPanel")) });
             return $("<div>").html(img).html();
         }
     });
