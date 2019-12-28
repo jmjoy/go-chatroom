@@ -1,7 +1,7 @@
 *.go text eol=lf
 *.html text eol=lf
 *.css text eol=lf
-*.js text eol=lf
+*.js text eol=lf linguist-vendored
 
 *.png binary
 *.jpg binary
