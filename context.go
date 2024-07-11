@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"code.google.com/p/go-uuid/uuid"
+	"github.com/google/uuid"
 
 	"golang.org/x/net/websocket"
 )
@@ -152,7 +152,7 @@ func (this *Context) Image(req *Request, now time.Time) error {
 		fp.Close()
 	}
 
-	resourceId := uuid.New()
+	resourceId := uuid.New().String()
 
 	fw, err := os.Create(filepath.Join(dirPath, resourceId))
 	if err != nil {
