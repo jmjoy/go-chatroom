@@ -24,4 +24,5 @@ _testmain.go
 *.prof
 
 go-chatroom
+go-chatroom-*
 go-chatroom.debug

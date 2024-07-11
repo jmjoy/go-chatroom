@@ -136,7 +136,7 @@ func (this *Context) Message(req *Request, now time.Time) error {
 // Image
 func (this *Context) Image(req *Request, now time.Time) error {
 	dateDir := now.Format("060102")
-	dirPath := filepath.Join("upload", dateDir)
+	dirPath := filepath.Join(gUploadDir, dateDir)
 
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
 		err = os.Mkdir(dirPath, 0777)
